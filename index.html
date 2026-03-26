@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>字味廚房 - 打工任務 Demo</title>
+    <style>
+        /* 全局與重置 */
+        body, html { margin: 0; padding: 0; font-family: 'Microsoft JhengHei', sans-serif; background-color: #f0f0f0; height: 100%; display: flex; justify-content: center; }
+        * { box-sizing: border-box; }
+
+        /* 遊戲主容器 (模擬手機螢幕) */
+        #game-container { width: 100%; max-width: 400px; height: 100%; background-color: #fff; display: flex; flex-direction: column; box-shadow: 0 0 15px rgba(0,0,0,0.2); overflow: hidden; position: relative; }
+
+        /* 上半部：廚房互動區 */
+        #kitchen-area { height: 45%; background-color: #FFE4B5; position: relative; padding: 10px; border-bottom: 3px solid #ccc; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; }
+        
+        /* 廚房物件樣式 (使用 Emoji 代替圖片) */
+        .kitchen-item { font-size: 40px; cursor: pointer; transition: all 0.5s ease; position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .item-label { font-size: 12px; background: rgba(255,255,255,0.8); padding: 2px 5px; border-radius: 5px; margin-top: -5px; font-weight: bold; }
+        
+        /* 特定物件初始位置 */
+        #sink { font-size: 60px; bottom: 10px; left: 10px; }
+        #pot { font-size: 60px; bottom: 10px; right: 20px; display: none; } /* 初始隱藏，G3才出現 */
+        
+        #radish-dirty { top: 20px; left: 20px; filter: grayscale(80%) sepia(50%); } /* 髒蘿蔔 */
+        
+        /* 食材群 (G3 使用) */
+        .ingredient { display: none; top: 20px; }
+        #ing-radish { left: 10%; }
+        #ing-flour { left: 30%; }
+        #ing-mushroom { left: 50%; }
+        #ing-shrimp { left: 70%; }
+        #ing-pork { left: 90%; } /* 干擾項 */
+
+        /* 移入鍋中的動畫狀態 */
+        .in-pot { top: 70% !important; left: 75% !important; transform: scale(0.5); opacity: 0; }
+
+        /* 蘿蔔糕成品 */
+        #turnip-cake { font-size: 80px; top: 30%; left: 40%; display: none; animation: pop 0.5s ease; }
+        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        /* 下半部：聊天室對話區 */
+        #chat-area { height: 55%; background-color: #74a4c4; display: flex; flex-direction: column; }
+        #chat-history { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* 聊天氣泡 */
+        .message { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 15px; line-height: 1.4; animation: fadeIn 0.3s ease; position: relative; }
+        .msg-boss { background-color: #fff; align-self: flex-start; border-top-left-radius: 0; }
+        .msg-player { background-color: #85e085; align-self: flex-end; border-top-right-radius: 0; }
+        .msg-system { background-color: rgba(0,0,0,0.4); color: white; align-self: center; font-size: 12px; border-radius: 20px; text-align: center; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 玩家操作面板 (選擇題) */
+        #interaction-panel { background-color: #fff; padding: 10px; display: none; flex-direction: column; gap: 8px; border-top: 1px solid #ddd; }
+        .choice-btn { background-color: #f8f9fa; border: 1px solid #ccc; padding: 10px; border-radius: 8px; font-size: 15px; cursor: pointer; text-align: left; transition: background 0.2s; }
+        .choice-btn:hover { background-color: #e2e6ea; }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="kitchen-area">
+        <div id="sink" class="kitchen-item">💧<div class="item-label">水槽</div></div>
+        <div id="pot" class="kitchen-item">🥘<div class="item-label">鍋子</div></div>
+
+        <div id="radish-dirty" class="kitchen-item" onclick="washRadish()">🥕🥕🥕<div class="item-label">未洗的蘿蔔</div></div>
+
+        <div id="ing-radish" class="kitchen-item ingredient" onclick="putInPot('ing-radish', true)">🥕<div class="item-label">白蘿蔔</div></div>
+        <div id="ing-flour" class="kitchen-item ingredient" onclick="putInPot('ing-flour', true)">🍚<div class="item-label">在來米粉</div></div>
+        <div id="ing-mushroom" class="kitchen-item ingredient" onclick="putInPot('ing-mushroom', true)">🍄<div class="item-label">乾香菇</div></div>
+        <div id="ing-shrimp" class="kitchen-item ingredient" onclick="putInPot('ing-shrimp', true)">🦐<div class="item-label">蝦米</div></div>
+        <div id="ing-pork" class="kitchen-item ingredient" onclick="putInPot('ing-pork', false)">🥩<div class="item-label">豬絞肉</div></div>
+
+        <div id="turnip-cake" class="kitchen-item">🥮<div class="item-label">蘿蔔糕</div></div>
+    </div>
+
+    <div id="chat-area">
+        <div id="chat-history">
+            </div>
+        <div id="interaction-panel">
+            </div>
+    </div>
+</div>
+
+<script>
+    // 遊戲狀態與變數
+    let currentStage = 1;
+    let potIngredientsCount = 0;
+
+    // DOM 元素
+    const chatHistory = document.getElementById('chat-history');
+    const interactionPanel = document.getElementById('interaction-panel');
+
+    // 初始化遊戲
+    window.onload = () => {
+        addSystemMessage("📅 除夕前一天 - 台灣小吃店");
+        setTimeout(() => {
+            addBossMessage("早安！今天除夕，客人會很多。我們廚房裡還有<b>好多白蘿蔔</b>還沒洗，你先幫我點擊白蘿蔔把它們洗乾淨！");
+        }, 1000);
+    };
+
+    // --- 訊息對話 UI 功能 ---
+    function addBossMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'message msg-boss';
+        msg.innerHTML = `<b>🧑‍🍳 店長：</b><br>${text}`;
+        chatHistory.appendChild(msg);
+        scrollToBottom();
+    }
+
+    function addPlayerMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'message msg-player';
+        msg.innerText = text;
+        chatHistory.appendChild(msg);
+        scrollToBottom();
+    }
+
+    function addSystemMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'message msg-system';
+        msg.innerText = text;
+        chatHistory.appendChild(msg);
+        scrollToBottom();
+    }
+
+    function scrollToBottom() {
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    // 顯示選擇題面板
+    function showChoices(choices) {
+        interactionPanel.innerHTML = '';
+        choices.forEach(choice => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerText = choice.text;
+            btn.onclick = () => {
+                interactionPanel.style.display = 'none';
+                addPlayerMessage(choice.text);
+                setTimeout(choice.action, 800);
+            };
+            interactionPanel.appendChild(btn);
+        });
+        interactionPanel.style.display = 'flex';
+    }
+
+    // --- G1 功能：好+多+量詞 ---
+    function washRadish() {
+        if (currentStage !== 1) return;
+        
+        const dirtyRadish = document.getElementById('radish-dirty');
+        dirtyRadish.style.filter = "none"; // 變乾淨
+        dirtyRadish.innerHTML = "✨🥕✨<div class='item-label'>乾淨的蘿蔔</div>";
+        
+        setTimeout(() => {
+            addSystemMessage("✅ 動作完成：洗蘿蔔");
+            addBossMessage("太好了！<b>好多白蘿蔔</b>都洗乾淨了。");
+            dirtyRadish.style.display = "none";
+            document.getElementById('sink').style.display = "none";
+            startStage2();
+        }, 1500);
+    }
+
+    // --- G3 功能：是...的 ---
+    function startStage2() {
+        currentStage = 2;
+        setTimeout(() => {
+            document.getElementById('pot').style.display = "flex";
+            const ingredients = document.querySelectorAll('.ingredient');
+            ingredients.forEach(el => el.style.display = "flex");
+
+            addBossMessage("接下來準備做蘿蔔糕。你知道蘿蔔糕<b>是</b>用什麼做<b>的</b>嗎？請把正確的 4 種食材點擊放進鍋子裡。");
+        }, 1500);
+    }
+
+    function putInPot(id, isCorrect) {
+        if (currentStage !== 2) return;
+        
+        const item = document.getElementById(id);
+        
+        if (!isCorrect) {
+            // 點到豬絞肉 (干擾項)
+            addSystemMessage("❌ 豬絞肉不是蘿蔔糕的材料喔！");
+            item.style.transform = "translateX(10px)";
+            setTimeout(() => item.style.transform = "translateX(0)", 200);
+            return;
+        }
+
+        // 正確食材放入鍋中
+        item.classList.add('in-pot');
+        potIngredientsCount++;
+
+        if (potIngredientsCount === 4) {
+            currentStage = 3;
+            setTimeout(() => {
+                addSystemMessage("✅ 動作完成：食材入鍋");
+                addBossMessage("沒錯！蘿蔔糕<b>是</b>用白蘿蔔、在來米粉、乾香菇和蝦米做<b>的</b>！現在我們開始蒸吧。");
+                startStage3();
+            }, 1000);
+        }
+    }
+
+    // --- G2 功能：V+起來 ---
+    function startStage3() {
+        setTimeout(() => {
+            // 隱藏鍋子與食材，顯示完成的蘿蔔糕
+            document.getElementById('pot').style.display = "none";
+            document.getElementById('turnip-cake').style.display = "flex";
+
+            addBossMessage("蘿蔔糕蒸好也煎好了！你看，表面黃黃的，聞(　　)怎麼樣？");
+            
+            showChoices([
+                { text: "這蘿蔔糕聞下去很香。", action: () => wrongAnswer("聞下去") },
+                { text: "這蘿蔔糕聞出來很香。", action: () => wrongAnswer("聞出來") },
+                { text: "這蘿蔔糕聞起來很香。", action: correctG2 }
+            ]);
+        }, 2000);
+    }
+
+    function wrongAnswer(word) {
+        addBossMessage(`不是「${word}」喔，我們是在表達對這道菜的評價和感覺，再試一次！`);
+        // 重新顯示正確選項 (此處為求簡化，直接重新顯示所有選項)
+        startStage3Choices(); 
+    }
+
+    function startStage3Choices() {
+        showChoices([
+            { text: "這蘿蔔糕聞下去很香。", action: () => wrongAnswer("聞下去") },
+            { text: "這蘿蔔糕聞出來很香。", action: () => wrongAnswer("聞出來") },
+            { text: "這蘿蔔糕聞起來很香。", action: correctG2 }
+        ]);
+    }
+
+    function correctG2() {
+        addSystemMessage("✅ 語法正確：V + 起來");
+        addBossMessage("答對了！聞<b>起來</b>很香，代表你的判斷很準確。");
+        startStage4();
+    }
+
+    // --- G4 功能：V+到 ---
+    function startStage4() {
+        currentStage = 4;
+        setTimeout(() => {
+            addBossMessage("辛苦了，請你吃一塊剛煎好的蘿蔔糕！味道怎麼樣？");
+            
+            showChoices([
+                { text: "這是我第一次吃見這種特別的食物。", action: () => wrongAnswerG4("吃見") },
+                { text: "這是我第一次吃到這種特別的食物。", action: correctG4 }
+            ]);
+        }, 1500);
+    }
+
+    function wrongAnswerG4(word) {
+        addBossMessage(`「${word}」不太對喔！「吃」通常搭配「到」來表示動作成功達成。再試一次！`);
+        showChoices([
+            { text: "這是我第一次吃見這種特別的食物。", action: () => wrongAnswerG4("吃見") },
+            { text: "這是我第一次吃到這種特別的食物。", action: correctG4 }
+        ]);
+    }
+
+    function correctG4() {
+        addSystemMessage("✅ 語法正確：V + 到");
+        addBossMessage("答對了！過年能吃<b>到</b>蘿蔔糕，代表新的一年會有好彩頭喔！恭喜你完成今天的廚房任務！🎉");
+        document.getElementById('turnip-cake').style.transform = "scale(1.5)";
+    }
+
+</script>
+</body>
+</html>
