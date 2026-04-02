@@ -86,9 +86,9 @@
                 <div style="font-size: 40px;">🥞</div>
                 <h3>2. 年糕<br>(Nian Gao)</h3>
             </div>
-            <div class="stage-card locked">
-                <div style="font-size: 40px;">🥟</div>
-                <h3>3. Locked</h3>
+            <div class="stage-card unlocked" onclick="startGame(3)">
+                <div style="font-size: 40px;">🐟</div>
+                <h3>3. 蒸魚<br>(Steamed Fish)</h3>
             </div>
             <div class="stage-card locked">
                 <div style="font-size: 40px;">🍲</div>
@@ -135,7 +135,7 @@
             1: { // STAGE 1: 蘿蔔糕
                 title: "Stage 1: 蘿蔔糕 (Radish Cake)",
                 tasks: [
-                    {   // Task 1: V+到
+                    {   
                         taskName: "冰箱找食材 (Find Ingredients)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "早安！快開店了。去旁邊的冰箱看看，你昨天有沒有買到蝦米？",
@@ -147,7 +147,7 @@
                             { textZh: "老闆，我看到蝦米了！", textVi: "Tôi nhìn thấy tôm khô rồi!", replyZh: "太好了！你學得很快。拿出來準備做蘿蔔糕吧。👍", isCorrect: true }
                         ]
                     },
-                    {   // Task 2: 是...的
+                    {   
                         taskName: "調配粉漿 (Mix the Batter)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "聽好，我們的蘿蔔糕是用純「在來米粉」做的，絕對不能加麵粉！",
@@ -158,7 +158,7 @@
                             { textZh: "老闆，我加在來米粉了。", textVi: "Tôi thêm bột gạo rồi.", replyZh: "沒錯！就是加「在來米粉」，你記得很清楚，準備下鍋囉。💯", isCorrect: true }
                         ]
                     },
-                    {   // Task 3: V+起來+Adj
+                    {   
                         taskName: "煎得恰恰 (Pan-fry)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "蘿蔔糕要煎得「恰恰」才好吃。你看看鍋裡，表皮看起來怎麼樣了？",
@@ -169,7 +169,7 @@
                             { textZh: "表皮看起來恰恰的！", textVi: "Lớp vỏ NHÌN vàng giòn rồi!", replyZh: "用對了！看起來顏色很漂亮，準備端給客人吧。", isCorrect: true }
                         ]
                     },
-                    {   // Task 4: 會
+                    {   
                         taskName: "服務外國客人 (Serve Customer)",
                         speakerIcon: "👱‍♂️ 馬丁 (Martin)",
                         textZh: "你好！我聽說台灣人過年吃蘿蔔糕，為什麼呢？",
@@ -185,7 +185,7 @@
             2: { // STAGE 2: 年糕
                 title: "Stage 2: 年糕 (Nian Gao)",
                 tasks: [
-                    {   // Task 1: Vs Vs 的
+                    {   
                         taskName: "試吃年糕 (Taste Test)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "辛苦了！桌上有我剛煎好的台灣年糕，你趁熱吃吃看。味道怎麼樣？",
@@ -197,7 +197,7 @@
                             { textZh: "哇，吃起來香香甜甜的，真好吃！", textVi: "Oa, ăn vào thơm thơm ngọt ngọt, ngon thật!", replyZh: "哈哈，會用「香香甜甜的」來形容，你的中文越來越好了！喜歡就好。👍", isCorrect: true }
                         ]
                     },
-                    {   // Task 2: ...的時候
+                    {   
                         taskName: "了解文化 (Culture Talk)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "你知道我們台灣人，通常是什麼時候一定會吃年糕嗎？",
@@ -208,7 +208,7 @@
                             { textZh: "是過年的時候吃嗎？", textVi: "Là lúc Tết ăn phải không?", replyZh: "答對了！因為年糕有「年年高升」的意思。✨", isCorrect: true }
                         ]
                     },
-                    {   // Task 3: V+完
+                    {   
                         taskName: "整理環境 (Clean Up)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "對了，你吃完了嗎？吃完記得把盤子拿去洗。",
@@ -219,7 +219,7 @@
                             { textZh: "老闆，我吃完了，盤子也洗好了！", textVi: "Tôi ăn xong rồi, đĩa cũng rửa xong!", replyZh: "太好了，動作真快！盤子洗得很乾淨，真是我的好幫手。👏", isCorrect: true }
                         ]
                     },
-                    {   // Task 4: 更+Vs
+                    {   
                         taskName: "準備明天 (Prep for Tomorrow)",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "你知道為什麼我們的年糕喜歡用「煎」的，不直接用微波爐加熱嗎？",
@@ -228,6 +228,69 @@
                         choices: [
                             { textZh: "因為煎的味道會更很香。", textVi: "Vì chiên thì vị sẽ càng rất thơm.", replyZh: "哈哈，味道真的很香對吧！不過我們講話的時候，「更」和「很」選一個用就好了喔。你再試著說一次？", isCorrect: false },
                             { textZh: "因為煎的味道會更香！", textVi: "Vì chiên thì mùi vị sẽ càng thơm hơn!", replyZh: "沒錯！表面煎得恰恰，香氣才會出來。今天辛苦了，早點下班吧，明天見！🎉", isCorrect: true }
+                        ]
+                    }
+                ]
+            },
+            3: { // STAGE 3: 蒸魚
+                title: "Stage 3: 蒸魚 (Steamed Fish)",
+                tasks: [
+                    {   // Task 1: V+過
+                        taskName: "傳統市場 (Traditional Market)",
+                        preMessage: {
+                            speakerIcon: "👩‍💼 我",
+                            textZh: "老闆，新年快樂！我到傳統市場了，這裡人好多！",
+                            textVi: "Ông chủ, chúc mừng năm mới! Tôi đến chợ truyền thống rồi, ở đây đông người quá!"
+                        },
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "新年快樂！傳統市場過年很熱鬧吧？你以前有去買過菜嗎？",
+                        textVi: "Chúc mừng năm mới! Chợ truyền thống ngày Tết náo nhiệt lắm đúng không? Trước đây cậu từng đi mua thức ăn ở đó chưa?",
+                        interactHtml: `<div class="env-item">🏮 🥬 🥩</div>`,
+                        choices: [
+                            { textZh: "老闆，我以前「不」去過傳統市場。", textVi: "Ông chủ, trước đây tôi 'không' từng đi chợ truyền thống.", replyZh: "哈哈，你是想說你「沒」去過對不對？傳統市場很有趣，你今天可以到處看看喔。你再重新跟我說一次？", isCorrect: false },
+                            { textZh: "老闆，我以前去了傳統市場。", textVi: "Ông chủ, trước đây tôi đã đi chợ truyền thống rồi.", replyZh: "喔？你已經去「過了」嗎？可是你剛剛傳訊息聽起來很驚訝，你再回想一下，是不是第一次去？", isCorrect: false },
+                            { textZh: "老闆，這是我第一次來，我以前「沒」來「過」傳統市場。", textVi: "Ông chủ, đây là lần đầu tôi đến, trước đây tôi 'chưa' từng đến chợ truyền thống bao giờ.", replyZh: "原來是這樣！那你慢慢逛，感受一下台灣過年的氣氛。👍", isCorrect: true }
+                        ]
+                    },
+                    {   // Task 2: V+好
+                        taskName: "準備原物料 (Prep Ingredients)",
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "今晚是除夕夜，你要準備做什麼好吃的？材料都準備好了嗎？",
+                        textVi: "Tối nay là đêm Giao thừa, cậu định chuẩn bị món gì ngon vậy? Đã chuẩn bị xong nguyên liệu chưa?",
+                        interactHtml: `<div class="env-item">🐟 攤</div>`,
+                        choices: [
+                            { textZh: "魚攤阿姨推薦我買鯧魚，所以我買了一條，我好買了！", textVi: "Dì bán cá khuyên tôi mua cá chim, nên tôi đã mua một con, tôi 'xong mua' rồi!", replyZh: "哈哈，「好買了」？你應該是想說你已經「買好」了對吧？鯧魚很適合清蒸喔，你再換個順序說說看？", isCorrect: false },
+                            { textZh: "我買完了！阿姨推薦我買鯧魚。", textVi: "Tôi mua xong [hết sạch] rồi! Dì khuyên tôi mua cá chim.", replyZh: "買「完」了？聽起來好像你把整個市場的魚都買光了哈哈！你想說的應該是你已經準備「好」了吧？換個說法試試看？", isCorrect: false },
+                            { textZh: "我買「好」了！魚攤阿姨推薦我買鯧魚，所以我買了一條。", textVi: "Tôi mua xong rồi! Dì bán cá khuyên tôi mua cá chim, nên tôi đã mua một con.", replyZh: "動作真快！鯧魚做蒸魚最棒了，期待你的大餐！👏", isCorrect: true }
+                        ]
+                    },
+                    {   // Task 3: 先...再...
+                        taskName: "做菜順序 (Cooking Steps)",
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "聽說你沒做過蒸魚，你知道順序嗎？打算怎麼做？",
+                        textVi: "Nghe nói cậu chưa làm món cá hấp bao giờ, cậu biết thứ tự làm không? Định làm thế nào?",
+                        interactHtml: `<div class="env-item">🐟 🧂 蔥薑</div>`,
+                        choices: [
+                            { textZh: "我打算先加醬油，然後洗魚，放蔥和薑。", textVi: "Tôi định cho nước tương vào trước, sau đó rửa cá, cho hành và gừng.", replyZh: "順序有點怪怪的喔！如果一開始就加醬油，後來洗魚的時候醬油不就被洗掉了嗎？你再想一下「先」做什麼，「再」做什麼？", isCorrect: false },
+                            { textZh: "我打算加醬油先，洗乾淨再。", textVi: "Tôi định cho nước tương trước, rửa sạch rồi mới.", replyZh: "哈哈，中文的順序是「先」加醬油，「再」洗乾淨。不過你的步驟顛倒了，你再重新思考一下煮菜的順序？", isCorrect: false },
+                            { textZh: "我打算先加醬油，再把魚洗乾淨，然後放蔥和薑，對嗎？", textVi: "Tôi định cho nước tương vào trước, rồi mới rửa sạch cá, sau đó cho hành và gừng, đúng không?", replyZh: "哎呀，不對啦！你要「先」把魚洗乾淨，放蔥和薑，「再」加一點醬油。最後蒸十分鐘才對喔。", isCorrect: true, playerAutoReplyZh: "啊！原來是這樣。謝謝老闆，我明白了！" }
+                        ]
+                    },
+                    {   // Task 4: V V 看
+                        taskName: "分享成果 (Share Result)",
+                        preMessage: {
+                            speakerIcon: "👩‍💼 我",
+                            textZh: "老闆，我照您教的方法做好了！我拍了一張照片傳給您，您看看。（傳送照片）<br><img src='zhengyu.jpg' alt='Steamed Fish' style='width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid #ccc;'>",
+                            textVi: "Ông chủ, tôi làm xong theo cách ông dạy rồi! Tôi chụp một bức ảnh gửi cho ông, ông xem thử nhé. [Gửi ảnh]"
+                        },
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "哇，看起來很好吃！對了，你知道為什麼台灣人過年一定要吃全魚，而且不能全部吃完嗎？",
+                        textVi: "Wow, nhìn ngon quá! À đúng rồi, cậu có biết tại sao người Đài Loan đón Tết nhất định phải ăn cá nguyên con, mà lại không được ăn hết sạch không?",
+                        interactHtml: `<div class="env-item">📱 💬</div>`,
+                        choices: [
+                            { textZh: "因為魚很好吃，所以要慢慢吃吃？", textVi: "Vì cá rất ngon, nên phải ăn từ từ?", replyZh: "哈哈，你是想說「慢慢吃」對吧？雖然魚很好吃，但其實有別的意思喔。你再猜猜看有什麼特別的意義？", isCorrect: false },
+                            { textZh: "因為我要把剩下的留給貓咪吃吃看？", textVi: "Vì tôi phải chừa lại phần dư cho mèo ăn thử xem sao?", replyZh: "哈哈，你想給貓咪「吃吃看」嗎？貓咪一定會很開心！不過，過年留一點魚是有特別的文化意義的喔。你再想一下「魚」的發音？", isCorrect: false },
+                            { textZh: "是因為「魚」和「餘」的發音一樣，代表「年年有餘」對嗎？下次開店，我再做給您吃吃看！", textVi: "Là vì 'Ngư' và 'Dư' phát âm giống nhau, tượng trưng cho 'Năm nào cũng dư dả' đúng không? Lần tới mở quán, tôi sẽ làm cho ông ăn thử xem sao!", replyZh: "沒錯！就是「年年有餘」！這張照片看起來你做得非常成功。今晚就好好享受你的年夜飯吧！新年快樂！🎊", isCorrect: true }
                         ]
                     }
                 ]
@@ -278,23 +341,21 @@
         }
 
         // --- HỆ THỐNG ĐỌC TTS THÔNG MINH ---
-        // Chỉ nhận văn bản thuần (textToRead), không chứa tên nhân vật hay HTML.
         function speakChinese(textToRead) {
             if (isMuted) return;
-            // Dọn dẹp ký tự Emoji/Icon trước khi đọc
-            let cleanText = textToRead.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
+            // Dọn dẹp thẻ HTML (<img>, <br>...) và Emoji trước khi đọc
+            let cleanText = textToRead.replace(/<[^>]*>?/gm, ''); 
+            cleanText = cleanText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
             
             const utterance = new SpeechSynthesisUtterance(cleanText.trim());
             utterance.lang = 'zh-TW'; 
             synth.speak(utterance);
         }
 
-        // Hàm in tin nhắn ra màn hình
         function addMessage(speakerName, textZh, textVi, isPlayer) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isPlayer ? 'player-msg' : 'boss-msg'}`;
             
-            // Xây dựng giao diện hiển thị (Có tên nhân vật và tiếng Việt)
             let htmlContent = "";
             if(speakerName) { htmlContent += `<span class="speaker-name">${speakerName}</span>`; }
             htmlContent += textZh;
@@ -303,11 +364,9 @@
             msgDiv.innerHTML = htmlContent;
             document.getElementById('chat-history').appendChild(msgDiv);
             
-            // Tự động cuộn xuống cuối cùng
             const chatHistory = document.getElementById('chat-history');
             chatHistory.scrollTop = chatHistory.scrollHeight;
 
-            // Gọi máy đọc (Chỉ truyền textZh)
             speakChinese(textZh); 
         }
 
@@ -325,17 +384,22 @@
             document.getElementById('scene-title').innerText = task.taskName;
             document.getElementById('interactive-area').innerHTML = task.interactHtml;
             
-            // In tin nhắn của Boss/Customer
-            addMessage(task.speakerIcon, task.textZh, task.textVi, false);
-            
-            // Hiển thị nút lựa chọn trong khu vực Chat
-            renderChoices(task);
+            // Xử lý tin nhắn "Mở bài" của nhân viên nếu có (Dùng cho Màn 3)
+            if (task.preMessage) {
+                addMessage(task.preMessage.speakerIcon, task.preMessage.textZh, task.preMessage.textVi, true);
+            }
+
+            // Đợi một chút rồi in tin nhắn của Boss (giúp UI đỡ bị giật khi load 2 tin nhắn cùng lúc)
+            setTimeout(() => {
+                addMessage(task.speakerIcon, task.textZh, task.textVi, false);
+                renderChoices(task);
+            }, task.preMessage ? 800 : 0); 
         }
 
         function renderChoices(task) {
             const container = document.getElementById('choices-container');
             container.innerHTML = ''; 
-            container.style.display = 'flex'; // Hiện lại khu vực chứa nút
+            container.style.display = 'flex'; 
 
             task.choices.forEach(choice => {
                 const btn = document.createElement('button');
@@ -344,13 +408,15 @@
                 btn.onclick = () => handleAnswer(choice, task);
                 container.appendChild(btn);
             });
-            // Tự động cuộn khung chat xuống để thấy rõ các nút chọn
-            const chatHistory = document.getElementById('chat-history');
-            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            setTimeout(() => {
+                const chatHistory = document.getElementById('chat-history');
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }, 100);
         }
 
         function handleAnswer(choice, task) {
-            document.getElementById('choices-container').style.display = 'none'; // Tạm ẩn nút
+            document.getElementById('choices-container').style.display = 'none'; 
             
             // In câu trả lời của người chơi
             addMessage("", choice.textZh, "", true);
@@ -360,14 +426,24 @@
                 if(choice.isCorrect) {
                     score += firstTry ? 10 : 5;
                     addMessage(task.speakerIcon, choice.replyZh, "", false);
-                    currentTaskIndex++;
-                    setTimeout(loadTask, 2500); // Chuyển task tiếp theo
+                    
+                    // Kiểm tra xem có tin nhắn Auto-Reply của người chơi không (Như Task 3 - Màn 3)
+                    if (choice.playerAutoReplyZh) {
+                        setTimeout(() => {
+                            addMessage("", choice.playerAutoReplyZh, "", true);
+                            currentTaskIndex++;
+                            setTimeout(loadTask, 2500); // Chuyển task sau khi tự động đáp
+                        }, 1500); 
+                    } else {
+                        currentTaskIndex++;
+                        setTimeout(loadTask, 2500); 
+                    }
                 } else {
                     score -= 2;
                     firstTry = false;
                     addMessage(task.speakerIcon, choice.replyZh, "", false);
                     updateUI();
-                    setTimeout(() => renderChoices(task), 2000); // Hiện lại nút cho chọn lại
+                    setTimeout(() => renderChoices(task), 2000); 
                 }
             }, 1000);
         }
