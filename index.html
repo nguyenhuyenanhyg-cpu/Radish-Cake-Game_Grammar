@@ -3,294 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>蘿蔔糕 - LINE 工作模擬 (Bản Hoàn Chỉnh)</title>
+    <title>台灣打工記 (Nhật ký làm thêm Đài Loan)</title>
     <style>
-        /* --- CSS: Thiết kế Giao diện --- */
-        body { display: flex; flex-direction: column; height: 100vh; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; overflow: hidden; }
+        /* CSS TOÀN CỤC */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; height: 100vh; overflow: hidden; display: flex; flex-direction: column;}
+        .hidden { display: none !important; }
         
-        /* Thanh trạng thái Top Bar */
+        /* Hiệu ứng nhịp đập (Heartbeat) cho lựa chọn */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* MÀN HÌNH MENU & CHỌN STAGE */
+        #menu-screen, #stage-select-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fffcf5; background-image: radial-gradient(#ff9800 1px, transparent 1px); background-size: 20px 20px; }
+        .title-box { text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 4px solid #ff9800; }
+        .title-box h1 { color: #e65100; font-size: 40px; margin: 0 0 10px 0; }
+        .title-box p { color: #666; font-size: 18px; margin-bottom: 30px; }
+        .btn-large { background: #ff9800; color: white; border: none; padding: 15px 40px; font-size: 24px; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4); }
+        .btn-large:hover { background: #e65100; transform: translateY(-3px); }
+        
+        .stage-grid { display: flex; gap: 20px; margin-top: 30px; }
+        .stage-card { background: white; padding: 30px; border-radius: 15px; text-align: center; border: 3px solid #ccc; cursor: pointer; transition: 0.3s; width: 150px; }
+        .stage-card.unlocked { border-color: #85e04b; box-shadow: 0 5px 15px rgba(133, 224, 75, 0.3); }
+        .stage-card.unlocked:hover { transform: translateY(-5px); background: #f0fdf0; }
+        .stage-card.locked { opacity: 0.6; cursor: not-allowed; }
+        .stage-card h3 { margin: 10px 0 0 0; color: #333; }
+
+        /* GIAO DIỆN GAME (TOP BAR, CHAT, INTERACT) */
+        #game-screen { flex: 1; display: flex; flex-direction: column; }
         #top-bar { display: flex; justify-content: space-between; align-items: center; background: #333; color: white; padding: 10px 20px; font-size: 18px; font-weight: bold; z-index: 10; }
-        #mute-btn { cursor: pointer; background: #ff9800; border: none; padding: 5px 15px; border-radius: 5px; color: white; font-weight: bold; transition: 0.2s; }
-        #mute-btn:hover { background: #e68a00; }
-
-        /* Vùng nội dung chính chia đôi */
+        #mute-btn { cursor: pointer; background: #ff9800; border: none; padding: 5px 15px; border-radius: 5px; color: white; font-weight: bold; }
         #main-content { display: flex; flex: 1; overflow: hidden; }
-
-        /* Giao diện LINE bên trái */
-        #chat-container { width: 40%; background: #749cbd; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #ccc; position: relative; }
+        
+        /* Cột Chat */
+        #chat-container { width: 40%; background: #749cbd; padding: 20px; display: flex; flex-direction: column; border-right: 2px solid #ccc; }
         #chat-history { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; padding-right: 10px; }
         .message { padding: 12px 16px; border-radius: 15px; max-width: 85%; font-size: 16px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .boss-msg { align-self: flex-start; background: #ffffff; border-top-left-radius: 0; }
         .player-msg { align-self: flex-end; background: #85e04b; border-top-right-radius: 0; }
         .note { font-size: 14px; color: #666; font-style: italic; margin-top: 5px; display: block; }
         
-        .choices { display: flex; flex-direction: column; gap: 10px; }
-        .choice-btn { padding: 12px; cursor: pointer; border: none; border-radius: 8px; background: white; font-size: 16px; text-align: left; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid #749cbd; }
-        .choice-btn:hover { background: #e8f4f8; transform: translateY(-2px); border-left: 5px solid #ff9800; }
+        /* Cột Tương tác & Đáp án */
+        #game-container { width: 60%; background: #fffcf5; padding: 30px; display: flex; flex-direction: column; position: relative;}
+        #scene-title { color: #333; font-size: 22px; border-bottom: 3px solid #ff9800; padding-bottom: 5px; margin-top: 0;}
+        #interactive-area { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; width: 100%; margin-top: 20px; flex: 1; align-items: center;}
+        
+        .choices-area { display: flex; flex-direction: column; gap: 10px; margin-top: auto; border-top: 2px dashed #ccc; padding-top: 20px;}
+        .choice-btn { padding: 15px; cursor: pointer; border: 2px solid #749cbd; border-radius: 8px; background: white; font-size: 16px; text-align: left; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); animation: heartbeat 2s infinite ease-in-out;}
+        .choice-btn:hover { background: #e8f4f8; border-color: #ff9800; animation: none; transform: translateX(5px);}
 
-        /* Giao diện Bếp bên phải */
-        #game-container { width: 60%; background: #fffcf5; padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;}
-        #scene-title { position: absolute; top: 20px; left: 30px; color: #333; font-size: 22px; border-bottom: 3px solid #ff9800; padding-bottom: 5px; }
-        #interactive-area { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; width: 100%; margin-top: 50px;}
-        .item { font-size: 60px; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 20px; border: 3px dashed transparent; border-radius: 15px; transition: 0.3s; background: rgba(255,255,255,0.6);}
-        .item span { font-size: 18px; margin-top: 10px; color: #555; font-weight: bold; }
-        .item:hover { border-color: #ff9800; background: #fff3e0; transform: scale(1.05);}
-
-        /* Bảng Memo (Modal) */
+        /* Bảng Memo */
         #memo-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
-        .memo-content { background: white; padding: 30px; border-radius: 15px; width: 60%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
-        .memo-content h2 { color: #ff9800; border-bottom: 2px solid #ccc; padding-bottom: 10px; text-align: center;}
-        .memo-item { margin-bottom: 15px; background: #f9f9f9; padding: 15px; border-left: 5px solid #85e04b; border-radius: 5px;}
-        .close-btn { display: block; width: 100%; padding: 15px; background: #ff9800; color: white; text-align: center; border: none; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px;}
-        .close-btn:hover { background: #e68a00; }
+        .memo-content { background: white; padding: 30px; border-radius: 15px; width: 60%; max-height: 80vh; overflow-y: auto; text-align: center;}
+        .memo-content h2 { color: #ff9800; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        .btn-home { margin-top: 20px; background: #85e04b; color: #333; font-size: 18px; padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;}
     </style>
 </head>
 <body>
 
-    <div id="top-bar">
-        <span id="progress-text">關卡 (Màn): 1 / 4</span>
-        <span id="score-text">老闆的信任度 (Điểm tín nhiệm): 0</span>
-        <button id="mute-btn" onclick="toggleMute()">🔊 Âm thanh: BẬT</button>
+    <div id="menu-screen">
+        <div class="title-box">
+            <h1>🍜 台灣打工記</h1>
+            <p>Nhật ký làm thêm Đài Loan - Luyện tập tiếng Trung TOCFL A1-A2</p>
+            <button class="btn-large" onclick="showStageSelect()">開始工作 (Bắt đầu)</button>
+        </div>
     </div>
 
-    <div id="main-content">
-        <div id="chat-container">
-            <div id="chat-history"></div>
-            <div class="choices" id="choices-container"></div>
+    <div id="stage-select-screen" class="hidden">
+        <h2>請選擇關卡 (Vui lòng chọn ca làm việc)</h2>
+        <div class="stage-grid">
+            <div class="stage-card unlocked" onclick="startGame(1)">
+                <div style="font-size: 40px;">🥢</div>
+                <h3>1. 蘿蔔糕<br>(Bánh củ cải)</h3>
+            </div>
+            <div class="stage-card unlocked" onclick="startGame(2)">
+                <div style="font-size: 40px;">🥞</div>
+                <h3>2. 年糕<br>(Bánh tổ)</h3>
+            </div>
+            <div class="stage-card locked">
+                <div style="font-size: 40px;">🥟</div>
+                <h3>3. 敬請期待<br>(Sắp ra mắt)</h3>
+            </div>
+            <div class="stage-card locked">
+                <div style="font-size: 40px;">🍲</div>
+                <h3>4. 敬請期待<br>(Sắp ra mắt)</h3>
+            </div>
         </div>
-        <div id="game-container">
-            <h2 id="scene-title">場景載入中...</h2>
-            <div id="interactive-area"></div>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div id="top-bar">
+            <span id="progress-text">關卡: 1 / 4</span>
+            <span id="score-text">信任度 (Điểm): 0</span>
+            <div>
+                <button id="mute-btn" onclick="toggleMute()">🔊 Âm聲</button>
+                <button onclick="backToMenu()" style="margin-left: 10px; cursor: pointer;">返回 (Thoát)</button>
+            </div>
+        </div>
+        <div id="main-content">
+            <div id="chat-container">
+                <div id="chat-history"></div>
+            </div>
+            <div id="game-container">
+                <h2 id="scene-title">任務 (Nhiệm vụ)</h2>
+                <div id="interactive-area"></div>
+                <div class="choices-area" id="choices-container"></div>
+            </div>
         </div>
     </div>
 
     <div id="memo-modal">
         <div class="memo-content">
-            <h2>📝 員工培訓總結 (Sổ tay nhân viên)</h2>
-            <p>Chúc mừng bạn đã hoàn thành ca làm việc! Đây là những "công cụ ngôn ngữ" bạn đã sử dụng thành công hôm nay:</p>
-            <div class="memo-item"><b>1. GL01: V + 到 (Thành công trong hành động)</b><br>Dùng để báo cáo kết quả. Bạn đã dùng <i>買到 (Mua được)</i> và <i>找到 (Tìm thấy)</i> tôm khô.</div>
-            <div class="memo-item"><b>2. GL03: 是...的 (Nhấn mạnh)</b><br>Dùng để làm rõ nguyên liệu. Bạn đã hiểu bánh <i>是用在來米粉做的 (Làm bằng bột gạo)</i>.</div>
-            <div class="memo-item"><b>3. GL04: V + 起來 + Adj (Đánh giá qua tri giác)</b><br>Dùng để đánh giá chất lượng. Bạn đã nhìn chảo và báo cáo <i>看起來恰恰的 (Nhìn vàng giòn)</i>.</div>
-            <div class="memo-item"><b>4. GL02: 會 (Dự đoán tương lai)</b><br>Dùng để thuyết phục khách. Bạn đã giải thích ăn củ cải <i>會有好運氣 (Sẽ có vận may)</i>.</div>
-            <button class="close-btn" onclick="location.reload()">再玩一次 (Chơi lại)</button>
+            <h2>📝 員工培訓總結 (Tổng kết ca làm)</h2>
+            <p id="memo-text">Bạn đã hoàn thành xuất sắc ca làm việc!</p>
+            <button class="btn-home" onclick="backToMenu()">回首頁 (Về trang chủ)</button>
         </div>
     </div>
 
     <script>
-        /* --- JAVASCRIPT: Logic, Âm thanh & Quản lý Trạng thái --- */
+        /* ==================================================================
+           KHO DỮ LIỆU GAME (DATABASE) - Thêm sửa hội thoại chỉ cần sửa ở đây
+           ================================================================== */
+        const GAME_DATA = {
+            1: { // STAGE 1: 蘿蔔糕
+                title: "第一關：蘿蔔糕 (Bánh củ cải)",
+                tasks: [
+                    {
+                        taskName: "冰箱找食材 (Tìm nguyên liệu)",
+                        bossMsg: "👨‍🍳 <b>老闆：</b><br>早安！快開店了。去旁邊的冰箱看看，你昨天有沒有<b>買到</b>蝦米？",
+                        bossNote: "Chào buổi sáng! Cậu có mua được tôm khô không?",
+                        interactHtml: `<div style="font-size:80px">🥬 🦐 🍄</div>`,
+                        choices: [
+                            { text: "老闆，我找蝦米了。", note: "Tôi tìm tôm khô rồi.", reply: "買了？那到底是有沒有買到啊？", isCorrect: false },
+                            { text: "老闆，我買到蝦米了！", note: "Tôi mua được tôm khô rồi!", reply: "很好，拿出來準備做蘿蔔糕。👍", isCorrect: true }
+                        ]
+                    },
+                    {
+                        taskName: "調配粉漿 (Pha bột)",
+                        bossMsg: "👨‍🍳 <b>老闆：</b><br>聽好，我們的蘿蔔糕<b>是</b>用純「在來米粉」做<b>的</b>，絕對不能加麵粉！",
+                        bossNote: "Bánh của chúng ta LÀ làm bằng bột gạo, tuyệt đối không dùng bột mì!",
+                        interactHtml: `<div style="font-size:60px; text-align:center;">🌾 麵粉 vs 🍚 在來米粉<br>(Vui lòng chọn đáp án bên dưới)</div>`,
+                        choices: [
+                            { text: "老闆，我加麵粉了。", note: "Tôi thêm bột mì rồi.", reply: "哎呀！你加麵粉做什麼？重來！😡", isCorrect: false },
+                            { text: "老闆，我加在來米粉了。", note: "Tôi thêm bột gạo rồi.", reply: "沒錯！準備下鍋。💯", isCorrect: true }
+                        ]
+                    }
+                ]
+            },
+            2: { // STAGE 2: 年糕
+                title: "第二關：年糕 (Bánh tổ)",
+                tasks: [
+                    {
+                        taskName: "試吃年糕 (Ăn vặt sau Tết)",
+                        bossMsg: "👨‍🍳 <b>老闆：</b><br>辛苦了！桌上有我剛煎好的台灣年糕，你趁熱吃吃看。味道怎麼樣？",
+                        bossNote: "Vất vả rồi! Trên bàn có bánh tổ tôi vừa chiên, ăn lúc còn nóng xem mùi vị thế nào?",
+                        interactHtml: `<div style="font-size:80px">🥞☕</div>`,
+                        choices: [
+                            { text: "老闆，這塊年糕很香香。", note: "Miếng bánh này rất thơm thơm.", reply: "不能把「很」跟「香香」放在一起用啦！", isCorrect: false },
+                            { text: "老闆，我要買一塊熱熱的年糕！", note: "Tôi muốn mua một miếng bánh nóng nóng!", reply: "我是請你吃，不是賣給你！😂", isCorrect: false },
+                            { text: "哇，吃起來香香甜甜的，真好吃！", note: "Oa, ăn vào thơm thơm ngọt ngọt, ngon thật!", reply: "哈哈，喜歡就好。👍", isCorrect: true }
+                        ]
+                    },
+                    {
+                        taskName: "了解文化 (Tìm hiểu văn hóa)",
+                        bossMsg: "👨‍🍳 <b>老闆：</b><br>你知道我們台灣人，通常是什麼<b>時候</b>一定會吃年糕嗎？",
+                        bossNote: "Cậu biết người Đài Loan thường là KHI NÀO nhất định sẽ ăn bánh tổ không?",
+                        interactHtml: `<div style="font-size:80px">🤔🧧</div>`,
+                        choices: [
+                            { text: "是「的時候過年」吃嗎？", note: "Là 'lúc mà Tết' ăn hả?", reply: "順序不對啦！「的時候」要放在後面。", isCorrect: false },
+                            { text: "是過年的時候吃嗎？", note: "Là lúc Tết ăn phải không?", reply: "答對了！因為年糕有「年年高升」的意思。✨", isCorrect: true }
+                        ]
+                    },
+                    {
+                        taskName: "整理環境 (Dọn dẹp)",
+                        bossMsg: "👨‍🍳 <b>老闆：</b><br>對了，你<b>吃完</b>了嗎？吃完記得把盤子拿去洗。",
+                        bossNote: "Đúng rồi, cậu đã ĂN XONG chưa? Ăn xong nhớ đem đĩa đi rửa nhé.",
+                        interactHtml: `<div style="font-size:80px">🍽️🚰</div>`,
+                        choices: [
+                            { text: "老闆，我完吃了！", note: "Tôi xong ăn rồi!", reply: "什麼「完吃」？「完」要放在動詞後面！", isCorrect: false },
+                            { text: "老闆，我吃完了，盤子也洗好了！", note: "Tôi ăn xong rồi, đĩa cũng rửa xong rồi!", reply: "很好，真是個好員工。👏", isCorrect: true }
+                        ]
+                    },
+                    {
+                        taskName: "準備明天 (Chuẩn bị cho ngày mai)",
+                        bossMsg: "👨‍🍳 <b>老闆：</b><br>對了，你知道為什麼我們的年糕喜歡用「煎」的，不直接用微波爐加熱嗎？",
+                        bossNote: "Cậu có biết tại sao bánh tổ của chúng ta thích dùng cách 'chiên', mà không hâm nóng bằng lò vi sóng không?",
+                        interactHtml: `<div style="font-size:80px">🍳 🔥</div>`,
+                        choices: [
+                            { text: "因為煎的味道會更很香。", note: "Vì chiên thì mùi vị sẽ càng rất thơm.", reply: "哎呀，文法錯囉！不能把「更」和「很」放在一起用啦，直接說「更香」就好。", isCorrect: false },
+                            { text: "因為煎的味道會更香！", note: "Vì chiên thì mùi vị sẽ càng thơm hơn!", reply: "沒錯！早點下班吧，明天見！🎉", isCorrect: true }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        /* ==================================================================
+           HỆ THỐNG LOGIC & ĐIỀU KHIỂN (ENGINE)
+           ================================================================== */
+        let currentStage = 1;
+        let currentTaskIndex = 0;
         let score = 0;
         let isMuted = false;
-        let firstTry = true; // Kiểm tra xem người chơi có trả lời đúng ngay lần đầu không
-        
+        let firstTry = true;
         const synth = window.speechSynthesis;
 
-        // Cập nhật giao diện điểm và tiến trình
-        function updateUI(stage) {
-            document.getElementById('progress-text').innerText = `關卡 (Màn): ${stage} / 4`;
-            document.getElementById('score-text').innerText = `老闆的信任度 (Điểm tín nhiệm): ${score}`;
+        // Chuyển đổi màn hình
+        function showStageSelect() {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('memo-modal').style.display = 'none';
+            document.getElementById('stage-select-screen').classList.remove('hidden');
         }
 
-        // Bật/Tắt âm thanh
+        function backToMenu() {
+            synth.cancel();
+            showStageSelect();
+        }
+
+        // Bắt đầu một Stage
+        function startGame(stageNum) {
+            currentStage = stageNum;
+            currentTaskIndex = 0;
+            score = 0;
+            document.getElementById('chat-history').innerHTML = ''; // Clear chat
+            document.getElementById('stage-select-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            updateUI();
+            loadTask();
+        }
+
+        function updateUI() {
+            document.getElementById('progress-text').innerText = `Stage: ${currentStage} - Task: ${currentTaskIndex + 1}/${GAME_DATA[currentStage].tasks.length}`;
+            document.getElementById('score-text').innerText = `老闆的信任度: ${score}`;
+        }
+
         function toggleMute() {
             isMuted = !isMuted;
-            document.getElementById('mute-btn').innerText = isMuted ? "🔇 Âm thanh: TẮT" : "🔊 Âm thanh: BẬT";
+            document.getElementById('mute-btn').innerText = isMuted ? "🔇 Âm thanh: Tắt" : "🔊 Âm thanh: Bật";
             if(isMuted) synth.cancel();
         }
 
-        // Hàm đọc tiếng Trung (Text-To-Speech)
+        // HỆ THỐNG ĐỌC TTS (Đã lọc Emoji)
         function speakChinese(text) {
             if (isMuted) return;
-            // Xóa bỏ các thẻ HTML và chữ trong ngoặc đơn (phần tiếng Việt) trước khi đọc
+            // Lọc bỏ HTML, ngoặc đơn (phần tiếng Việt) và lọc các ký tự Emoji
             let cleanText = text.replace(/<[^>]*>?/gm, ''); 
             cleanText = cleanText.replace(/\(.*?\)/g, '');
+            // Xóa Emoji (Regex nhận diện các biểu tượng)
+            cleanText = cleanText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
             
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.lang = 'zh-TW'; // Giọng Đài Loan
-            utterance.rate = 1.0;
+            const utterance = new SpeechSynthesisUtterance(cleanText.trim());
+            utterance.lang = 'zh-TW'; 
             synth.speak(utterance);
         }
 
-        // Hàm thêm tin nhắn vào chat
-        // textZh: Câu tiếng Trung (Máy sẽ đọc) | textVi: Chú thích (Chỉ hiện)
-        function addMessage(textZh, textVi, sender, speakerIcon = "👨‍🍳 <b>老闆：</b><br>") {
+        function addMessage(textZh, textVi, sender) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${sender === 'boss' ? 'boss-msg' : 'player-msg'}`;
+            msgDiv.innerHTML = textZh + (textVi ? `<span class="note">(${textVi})</span>` : '');
             
-            let htmlContent = sender === 'boss' || sender === 'customer' ? speakerIcon + textZh : textZh;
-            if(textVi) htmlContent += `<span class="note">(${textVi})</span>`;
-            
-            msgDiv.innerHTML = htmlContent;
             document.getElementById('chat-history').appendChild(msgDiv);
             document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
 
-            if(sender === 'boss' || sender === 'customer') {
-                speakChinese(textZh);
-            }
+            speakChinese(textZh); // Đọc câu thoại
         }
 
-        function clearChoices() { document.getElementById('choices-container').innerHTML = ''; }
-
-        // Tính điểm
-        function addScore(isCorrect) {
-            if(isCorrect) {
-                score += firstTry ? 10 : 5;
-            } else {
-                score -= 2;
-                firstTry = false;
+        // TẢI NHIỆM VỤ TỪ DỮ LIỆU JSON
+        function loadTask() {
+            const stageData = GAME_DATA[currentStage];
+            if (currentTaskIndex >= stageData.tasks.length) {
+                // Hết task -> Hiện bảng tổng kết
+                document.getElementById('memo-modal').style.display = 'flex';
+                return;
             }
-            updateUI(document.getElementById('progress-text').innerText.split(' ')[2]); // Giữ nguyên màn hiện tại
-        }
 
-        // -----------------------------------------------------
-        // MÀN 1: TÌM NGUYÊN LIỆU (GL01: V + 到)
-        // -----------------------------------------------------
-        function startScene1() {
-            updateUI(1);
+            const task = stageData.tasks[currentTaskIndex];
             firstTry = true;
-            document.getElementById('scene-title').innerText = "第一關：冰箱找食材 (Tìm nguyên liệu)";
-            document.getElementById('interactive-area').innerHTML = `<div class="item">🥬<span>高麗菜</span></div><div class="item">🦐<span>蝦米</span></div>`;
+            document.getElementById('scene-title').innerText = `${stageData.title} - ${task.taskName}`;
+            document.getElementById('interactive-area').innerHTML = task.interactHtml;
             
-            addMessage("早安！快開店了。去旁邊的冰箱看看，你昨天有沒有<b>買到</b>蝦米？", "Chào buổi sáng! Cậu có mua được tôm khô không?", "boss");
-            showScene1Choices();
+            addMessage(task.bossMsg, task.bossNote, 'boss');
+            renderChoices(task);
         }
 
-        function showScene1Choices() {
-            clearChoices();
-            const choices = [
-                { zh: "老闆，我找蝦米了。", vi: "Ông chủ, tôi tìm tôm khô rồi.", correct: false, replyZh: "買了？那到底是有沒有買到啊？", replyVi: "Thế rốt cuộc là có mua ĐƯỢC không?" },
-                { zh: "老闆，我買到蝦米了！", vi: "Ông chủ, tôi mua được tôm khô rồi!", correct: true }
-            ];
+        function renderChoices(task) {
+            const container = document.getElementById('choices-container');
+            container.innerHTML = ''; // Clear cũ
 
-            choices.forEach(choice => {
+            task.choices.forEach(choice => {
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
-                btn.innerHTML = `${choice.zh}<br><span class="note">(${choice.vi})</span>`;
-                btn.onclick = () => {
-                    addMessage(choice.zh, "", "player");
-                    if(choice.correct) {
-                        addScore(true);
-                        addMessage("很好，拿出來準備做蘿蔔糕。👍", "Tốt, lấy ra chuẩn bị làm bánh.", "boss");
-                        setTimeout(startScene2, 2500);
-                    } else {
-                        addScore(false);
-                        setTimeout(() => { addMessage(choice.replyZh, choice.replyVi, "boss"); showScene1Choices(); }, 1000);
-                    }
-                };
-                document.getElementById('choices-container').appendChild(btn);
+                btn.innerHTML = `💬 ${choice.text} <br><span class="note">(${choice.note})</span>`;
+                btn.onclick = () => handleAnswer(choice, task);
+                container.appendChild(btn);
             });
         }
 
-        // -----------------------------------------------------
-        // MÀN 2: PHA BỘT (GL03: 是...的)
-        // -----------------------------------------------------
-        function startScene2() {
-            updateUI(2);
-            firstTry = true;
-            document.getElementById('scene-title').innerText = "第二關：調配粉漿 (Pha bột)";
-            document.getElementById('interactive-area').innerHTML = `
-                <div class="item" onclick="handleFlour(false)">🌾<span>麵粉 (Bột mì)</span></div>
-                <div class="item" onclick="handleFlour(true)">🍚<span>在來米粉 (Bột gạo)</span></div>`;
-            
-            addMessage("聽好，我們的蘿蔔糕<b>是</b>用純「在來米粉」做<b>的</b>，絕對不能加麵粉！把對的粉點擊下鍋。", "Bánh của chúng ta LÀ làm bằng bột gạo, click chọn đúng loại bột nhé.", "boss");
-            clearChoices();
+        function handleAnswer(choice, task) {
+            // Người chơi trả lời
+            addMessage(choice.text, "", 'player');
+            document.getElementById('choices-container').innerHTML = ''; // Ẩn nút để chờ Boss reply
+
+            setTimeout(() => {
+                if(choice.isCorrect) {
+                    score += firstTry ? 10 : 5;
+                    addMessage(`👨‍🍳 <b>老闆：</b><br>${choice.reply}`, "", 'boss');
+                    updateUI();
+                    currentTaskIndex++;
+                    setTimeout(loadTask, 2000); // Đợi 2s rồi qua task mới
+                } else {
+                    score -= 2;
+                    firstTry = false;
+                    addMessage(`👨‍🍳 <b>老闆：</b><br>${choice.reply}`, "", 'boss');
+                    updateUI();
+                    setTimeout(() => renderChoices(task), 1500); // Hiện lại nút cho chọn lại
+                }
+            }, 800);
         }
-
-        function handleFlour(isCorrect) {
-            if(isCorrect) {
-                addScore(true);
-                addMessage("老闆，我加在來米粉了。", "", "player");
-                addMessage("沒錯！準備下鍋。💯", "Chuẩn rồi! Chuẩn bị chiên.", "boss");
-                document.getElementById('interactive-area').innerHTML = `<div class="item">🍲<span>完美的粉漿</span></div>`;
-                setTimeout(startScene3, 2500);
-            } else {
-                addScore(false);
-                addMessage("老闆，我加麵粉了。", "", "player");
-                addMessage("哎呀！你加麵粉做什麼？重來！😡", "Cậu thêm bột mì làm gì? Làm lại!", "boss");
-            }
-        }
-
-        // -----------------------------------------------------
-        // MÀN 3: CHIÊN BÁNH (GL04: V + 起來 + Adj)
-        // -----------------------------------------------------
-        function startScene3() {
-            updateUI(3);
-            firstTry = true;
-            document.getElementById('scene-title').innerText = "第三關：煎得恰恰 (Chiên vàng giòn)";
-            document.getElementById('interactive-area').innerHTML = `<div class="item">🍳<span>煎蘿蔔糕</span></div>`;
-            
-            addMessage("蘿蔔糕要煎得「恰恰」才好吃。你看看鍋裡，表皮<b>看起來</b>怎麼樣了？", "Cậu nhìn trong chảo xem, lớp vỏ NHÌN thế nào rồi?", "boss");
-            
-            clearChoices();
-            const choices = [
-                { zh: "表皮吃起來恰恰的！", vi: "Lớp vỏ ĂN vàng giòn rồi!", correct: false, replyZh: "你偷吃嗎？！我叫你「看」！", replyVi: "Cậu ăn vụng à?! Tôi bảo cậu NHÌN cơ mà!" },
-                { zh: "表皮看起來恰恰的！", vi: "Lớp vỏ NHÌN vàng giòn rồi!", correct: true }
-            ];
-
-            choices.forEach(choice => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.innerHTML = `${choice.zh}<br><span class="note">(${choice.vi})</span>`;
-                btn.onclick = () => {
-                    addMessage(choice.zh, "", "player");
-                    if(choice.correct) {
-                        addScore(true);
-                        addMessage("太棒了！準備端給客人。", "Tuyệt vời! Mang ra cho khách đi.", "boss");
-                        setTimeout(startScene4, 2500);
-                    } else {
-                        addScore(false);
-                        setTimeout(() => { addMessage(choice.replyZh, choice.replyVi, "boss"); showScene3Choices(); }, 1000);
-                    }
-                };
-                document.getElementById('choices-container').appendChild(btn);
-            });
-            // Lưu lại hàm tạo nút để gọi lại khi sai
-            window.showScene3Choices = startScene3; 
-        }
-
-        // -----------------------------------------------------
-        // MÀN 4: PHỤC VỤ KHÁCH (GL02: 會)
-        // -----------------------------------------------------
-        function startScene4() {
-            updateUI(4);
-            firstTry = true;
-            document.getElementById('scene-title').innerText = "第四關：服務外國客人 (Phục vụ khách Tây)";
-            document.getElementById('interactive-area').innerHTML = `<div class="item">👱‍♂️<span>馬丁 (Martin)</span></div>`;
-            
-            // Đổi người chat thành Khách hàng
-            addMessage("你好！我聽說台灣人過年吃蘿蔔糕，為什麼呢？", "Xin chào! Tại sao người Đài Loan lại ăn bánh củ cải dịp Tết vậy?", "customer", "👱‍♂️ <b>馬丁：</b><br>");
-            
-            clearChoices();
-            const choices = [
-                { zh: "因為我會做，所以你應該吃。", vi: "Vì tôi BIẾT làm, nên anh nên ăn.", correct: false, replyZh: "呃...但我問的是為什麼過年吃？", replyVi: "Ờ... nhưng tôi hỏi tại sao Tết lại ăn cơ mà?" },
-                { zh: "因為蘿蔔叫菜頭，吃蘿蔔糕，新的一年會有好運氣！", vi: "Vì củ cải là 'Thái đầu', ăn vào năm mới SẼ có vận may!", correct: true }
-            ];
-
-            choices.forEach(choice => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.innerHTML = `${choice.zh}<br><span class="note">(${choice.vi})</span>`;
-                btn.onclick = () => {
-                    addMessage(choice.zh, "", "player");
-                    if(choice.correct) {
-                        addScore(true);
-                        addMessage("原來如此！那我買兩份！🤩", "Thì ra là vậy! Thế tôi mua 2 phần!", "customer", "👱‍♂️ <b>馬丁：</b><br>");
-                        setTimeout(showMemo, 2500); // Hiện bảng tổng kết
-                    } else {
-                        addScore(false);
-                        setTimeout(() => { addMessage(choice.replyZh, choice.replyVi, "customer", "👱‍♂️ <b>馬丁：</b><br>"); }, 1000);
-                    }
-                };
-                document.getElementById('choices-container').appendChild(btn);
-            });
-        }
-
-        // Hiện bảng tổng kết cuối game
-        function showMemo() {
-            document.getElementById('memo-modal').style.display = 'flex';
-        }
-
-        // Khởi động
-        startScene1();
     </script>
 </body>
 </html>
