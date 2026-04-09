@@ -65,8 +65,6 @@
         .play-audio-btn:hover { background: #ff9800; color: white; transform: scale(1.1); }
         .player-msg .play-audio-btn { background: #6bc939; }
         .player-msg .play-audio-btn:hover { background: #fff; }
-
-        #typing-indicator { align-self: flex-start; background: #ffffff; border-top-left-radius: 0; padding: 12px 20px; border-radius: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 10px;}
         
         /* Choices Area */
         .choices-area { background: #ebf0f5; padding: 15px; border-top: 2px solid #ccc; display: flex; flex-direction: column; gap: 10px; max-height: 40%; overflow-y: auto;}
@@ -132,10 +130,8 @@
         </div>
         <div id="main-content">
             <div id="chat-container">
-                <div id="chat-history"></div>
-                <div id="typing-indicator" class="hidden">
-                    <span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span>
-                </div>
+                <div id="chat-history">
+                    </div>
                 <div class="choices-area hidden" id="choices-container"></div>
             </div>
             <div id="game-container">
@@ -265,7 +261,7 @@
                     }
                 ]
             },
-            3: { // NEW STAGE 3: 佛跳牆 (Was Stage 4)
+            3: { // STAGE 3: 佛跳牆
                 title: "Stage 3: 佛跳牆",
                 grammarReview: [
                     "<strong>都：</strong>表示「全部、皆」(all)。注意位置：放在動詞前面。例如：材料「都」泡好了。",
@@ -323,7 +319,7 @@
                     }
                 ]
             },
-            4: { // NEW STAGE 4: 蒸魚 (Was Stage 3)
+            4: { // STAGE 4: 蒸魚
                 title: "Stage 4: 蒸魚",
                 grammarReview: [
                     "<strong>V+過：</strong>表示過去的經驗 (have done before)。否定句用「沒...過」。",
@@ -408,7 +404,7 @@
             currentStage = stageNum;
             currentTaskIndex = 0;
             score = 0;
-            document.getElementById('chat-history').innerHTML = ''; 
+            document.getElementById('chat-history').innerHTML = ''; // Clear chat completely
             document.getElementById('stage-select-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             loadTask();
@@ -430,23 +426,37 @@
             synth.speak(utterance);
         }
 
-        function showTypingIndicator() {
+        // --- HỆ THỐNG GÕ PHÍM ĐỘNG (SỬA LỖI DOM) ---
+        function showTypingIndicator(isPlayer = false) {
             const chatHistory = document.getElementById('chat-history');
-            const typingDiv = document.getElementById('typing-indicator');
-            chatHistory.appendChild(typingDiv); // Move to bottom
-            typingDiv.classList.remove('hidden');
+            
+            // Xóa bong bóng cũ nếu còn sót lại để tránh lỗi
+            hideTypingIndicator();
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = `message ${isPlayer ? 'player-msg' : 'boss-msg'}`;
+            // Điều chỉnh CSS nội tuyến để bong bóng gọn gàng
+            typingDiv.style.width = 'fit-content';
+            typingDiv.style.padding = '8px 16px';
+            typingDiv.innerHTML = '<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span>';
+            
+            chatHistory.appendChild(typingDiv);
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
 
         function hideTypingIndicator() {
-            document.getElementById('typing-indicator').classList.add('hidden');
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
         }
 
         function addMessage(speakerName, textZh, isPlayer) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isPlayer ? 'player-msg' : 'boss-msg'}`;
             
-            // Escape quotes for the onclick function
+            // Escape quotes cho onclick
             const safeText = textZh.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
             let htmlContent = "";
@@ -462,7 +472,15 @@
             msgDiv.innerHTML = htmlContent;
             
             const chatHistory = document.getElementById('chat-history');
-            chatHistory.insertBefore(msgDiv, document.getElementById('typing-indicator')); // Insert above typing indicator
+            
+            // Luôn đảm bảo tin nhắn mới được chèn LÊN TRÊN bong bóng typing nếu bong bóng đang bật
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                chatHistory.insertBefore(msgDiv, indicator);
+            } else {
+                chatHistory.appendChild(msgDiv);
+            }
+            
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
 
@@ -504,12 +522,12 @@
 
             // Boss Typing Effect
             setTimeout(() => {
-                showTypingIndicator();
+                showTypingIndicator(false); // Boss typing (white bubble)
                 setTimeout(() => {
                     hideTypingIndicator();
                     addMessage(task.speakerIcon, task.textZh, false);
                     renderChoices(task);
-                }, 1500); // 1.5s typing delay
+                }, 1500); 
             }, delayTime); 
         }
 
@@ -535,14 +553,14 @@
         function handleAnswer(choice, task) {
             document.getElementById('choices-container').classList.add('hidden'); 
             
-            // 1. In câu trả lời của người chơi
+            // In câu trả lời của người chơi
             addMessage("👩‍💼 我", choice.textZh, true);
 
-            // 2. Boss bắt đầu gõ
+            // Boss bắt đầu gõ
             setTimeout(() => {
-                showTypingIndicator();
+                showTypingIndicator(false);
                 
-                // 3. Phản hồi của Boss sau 1.5s gõ phím
+                // Phản hồi của Boss sau 1.5s
                 setTimeout(() => {
                     hideTypingIndicator();
                     
@@ -553,7 +571,7 @@
                         // Nếu có câu đáp tự động của Player
                         if (choice.playerAutoReplyZh) {
                             setTimeout(() => {
-                                showTypingIndicator(); // Giả lập Player gõ
+                                showTypingIndicator(true); // Player typing (green bubble)
                                 setTimeout(() => {
                                     hideTypingIndicator();
                                     addMessage("👩‍💼 我", choice.playerAutoReplyZh, true);
