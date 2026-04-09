@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Taiwan Part-time Job Simulator</title>
+    <title>台灣打工記 (Taiwan Part-time Job Simulator)</title>
     <style>
         /* --- GLOBAL CSS --- */
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; height: 100vh; overflow: hidden; display: flex; flex-direction: column;}
@@ -15,6 +15,16 @@
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
         }
+
+        /* Typing Indicator Animation */
+        @keyframes blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
+        }
+        .typing-dot { font-size: 24px; line-height: 10px; animation: blink 1.4s infinite both; }
+        .typing-dot:nth-child(2) { animation-delay: .2s; }
+        .typing-dot:nth-child(3) { animation-delay: .4s; }
 
         /* --- MENU & STAGE SELECT --- */
         #menu-screen, #stage-select-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fffcf5; background-image: radial-gradient(#ff9800 1px, transparent 1px); background-size: 20px 20px; }
@@ -29,7 +39,7 @@
         .stage-card.unlocked { border-color: #85e04b; box-shadow: 0 5px 15px rgba(133, 224, 75, 0.3); }
         .stage-card.unlocked:hover { transform: translateY(-5px); background: #f0fdf0; }
         .stage-card.locked { opacity: 0.6; cursor: not-allowed; }
-        .stage-card h3 { margin: 10px 0 0 0; color: #333; }
+        .stage-card h3 { margin: 10px 0 0 0; color: #333; font-size: 18px;}
 
         /* --- GAME UI --- */
         #game-screen { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -41,14 +51,24 @@
         
         /* Left Column: Chat Container */
         #chat-container { width: 40%; background: #749cbd; display: flex; flex-direction: column; border-right: 2px solid #ccc; position: relative; }
-        #chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .message { padding: 12px 16px; border-radius: 15px; max-width: 85%; font-size: 16px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        #chat-history { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth;}
+        
+        .message { padding: 12px 16px; border-radius: 15px; max-width: 85%; font-size: 16px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; flex-direction: column;}
         .boss-msg { align-self: flex-start; background: #ffffff; border-top-left-radius: 0; }
         .player-msg { align-self: flex-end; background: #85e04b; border-top-right-radius: 0; }
-        .note { font-size: 14px; color: #666; font-style: italic; margin-top: 5px; display: block; }
-        .speaker-name { font-weight: bold; display: block; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px; }
         
-        /* Choices Area (Moved to the bottom of the Chat Column) */
+        .speaker-name { font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px; font-size: 14px; color: #555;}
+        .msg-body { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .msg-text { flex: 1; }
+        
+        .play-audio-btn { background: none; border: none; cursor: pointer; font-size: 18px; padding: 5px; border-radius: 50%; transition: 0.2s; background: #f0f0f0;}
+        .play-audio-btn:hover { background: #ff9800; color: white; transform: scale(1.1); }
+        .player-msg .play-audio-btn { background: #6bc939; }
+        .player-msg .play-audio-btn:hover { background: #fff; }
+
+        #typing-indicator { align-self: flex-start; background: #ffffff; border-top-left-radius: 0; padding: 12px 20px; border-radius: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 10px;}
+        
+        /* Choices Area */
         .choices-area { background: #ebf0f5; padding: 15px; border-top: 2px solid #ccc; display: flex; flex-direction: column; gap: 10px; max-height: 40%; overflow-y: auto;}
         .choice-btn { padding: 12px; cursor: pointer; border: 2px solid #749cbd; border-radius: 8px; background: white; font-size: 15px; text-align: left; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); animation: heartbeat 2s infinite ease-in-out;}
         .choice-btn:hover { background: #e8f4f8; border-color: #ff9800; animation: none; transform: translateX(5px);}
@@ -59,10 +79,14 @@
         #interactive-area { display: flex; gap: 40px; justify-content: center; align-items: center; width: 100%; flex: 1; }
         .env-item { font-size: 100px; padding: 20px; background: rgba(255,255,255,0.7); border: 3px dashed #ccc; border-radius: 20px;}
 
-        /* --- MEMO MODAL --- */
+        /* --- GRAMMAR REVIEW MODAL --- */
         #memo-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
-        .memo-content { background: white; padding: 30px; border-radius: 15px; width: 60%; max-height: 80vh; overflow-y: auto; text-align: center;}
-        .memo-content h2 { color: #ff9800; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+        .memo-content { background: white; padding: 40px; border-radius: 15px; width: 50%; max-height: 80vh; overflow-y: auto; text-align: left;}
+        .memo-content h2 { color: #e65100; border-bottom: 2px solid #ff9800; padding-bottom: 10px; text-align: center; margin-top: 0;}
+        .grammar-list { font-size: 18px; line-height: 1.8; color: #333; padding-left: 20px;}
+        .grammar-list li { margin-bottom: 15px; }
+        .grammar-list strong { color: #2196F3; font-size: 20px;}
+        .center-btn { display: flex; justify-content: center; margin-top: 30px;}
     </style>
 </head>
 <body>
@@ -70,13 +94,13 @@
     <div id="menu-screen">
         <div class="title-box">
             <h1>🍜 台灣打工記</h1>
-            <p>Taiwan Part-time Job Simulator - TOCFL A1-A2</p>
+            <p>Taiwan Part-time Job Simulator - TOCFL A1-B1</p>
             <button class="btn-large" onclick="showStageSelect()">Start Game</button>
         </div>
     </div>
 
     <div id="stage-select-screen" class="hidden">
-        <h2>Select a Stage</h2>
+        <h2>請選擇關卡 (Select a Stage)</h2>
         <div class="stage-grid">
             <div class="stage-card unlocked" onclick="startGame(1)">
                 <div style="font-size: 40px;">🥢</div>
@@ -87,12 +111,12 @@
                 <h3>2. 年糕<br>(Nian Gao)</h3>
             </div>
             <div class="stage-card unlocked" onclick="startGame(3)">
-                <div style="font-size: 40px;">🐟</div>
-                <h3>3. 蒸魚<br>(Steamed Fish)</h3>
-            </div>
-            <div class="stage-card locked">
                 <div style="font-size: 40px;">🍲</div>
-                <h3>4. Locked</h3>
+                <h3>3. 佛跳牆<br>(Buddha Jumps Over the Wall)</h3>
+            </div>
+            <div class="stage-card unlocked" onclick="startGame(4)">
+                <div style="font-size: 40px;">🐟</div>
+                <h3>4. 蒸魚<br>(Steamed Fish)</h3>
             </div>
         </div>
         <button class="btn-small" style="margin-top: 30px; padding: 10px 30px; font-size: 18px;" onclick="location.reload()">Back</button>
@@ -103,14 +127,16 @@
             <span id="progress-text">Stage: 1 - Task: 1/4</span>
             <span id="score-text">Trust Level: 0</span>
             <div>
-                <button id="mute-btn" class="btn-small" onclick="toggleMute()">🔊 Audio: ON</button>
                 <button class="btn-small" onclick="backToMenu()">Quit</button>
             </div>
         </div>
         <div id="main-content">
             <div id="chat-container">
                 <div id="chat-history"></div>
-                <div class="choices-area" id="choices-container"></div>
+                <div id="typing-indicator" class="hidden">
+                    <span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span>
+                </div>
+                <div class="choices-area hidden" id="choices-container"></div>
             </div>
             <div id="game-container">
                 <h2 id="scene-title">Task Title</h2>
@@ -121,176 +147,235 @@
 
     <div id="memo-modal">
         <div class="memo-content">
-            <h2>📝 Employee Training Summary</h2>
-            <p>Congratulations! You have completed the shift successfully.</p>
-            <button class="btn-small" style="padding: 10px 30px; font-size: 18px; margin-top: 20px;" onclick="backToMenu()">Back to Home</button>
+            <h2>📝 本日學習重點 (Today's Review)</h2>
+            <ul class="grammar-list" id="grammar-points">
+                </ul>
+            <div class="center-btn">
+                <button class="btn-large" style="font-size: 18px; padding: 10px 30px;" onclick="backToMenu()">完成打工 (Finish Shift)</button>
+            </div>
         </div>
     </div>
 
     <script>
         /* ==================================================================
-           DATABASE (JSON): ALL TEXTS AND LOGIC
+           DATABASE (JSON): PURE CHINESE SCRIPT + GRAMMAR REVIEWS
            ================================================================== */
         const GAME_DATA = {
             1: { // STAGE 1: 蘿蔔糕
-                title: "Stage 1: 蘿蔔糕 (Radish Cake)",
+                title: "Stage 1: 蘿蔔糕",
+                grammarReview: [
+                    "<strong>找 vs 找到：</strong>「找」是動作 (look for)，「找到」是結果 (found)。",
+                    "<strong>看 vs 看到：</strong>「看」是動作 (look/watch)，「看到」是結果 (saw)。",
+                    "<strong>恰恰：</strong>台語常用詞，形容食物煎到表面金黃酥脆的樣子。",
+                    "<strong>菜頭：</strong>蘿蔔的台語發音，與「彩頭」(好運) 發音相近，代表好兆頭。"
+                ],
                 tasks: [
                     {   
-                        taskName: "冰箱找食材 (Find Ingredients)",
+                        taskName: "冰箱找食材",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "早安！快開店了。去旁邊的冰箱看看，你昨天有沒有買到蝦米？",
-                        textVi: "Chào buổi sáng! Cậu có mua được tôm khô không?",
                         interactHtml: `<div class="env-item">🥬 🦐 🍄</div>`,
                         choices: [
-                            { textZh: "老闆，我找蝦米了。", textVi: "Tôi tìm tôm khô rồi.", replyZh: "哈哈，你是說你「找」了，那到底是有沒有「找到」呢？你再確實跟我報告一次！", isCorrect: false },
-                            { textZh: "老闆，我沒看到蝦米。", textVi: "Tôi không nhìn thấy tôm.", replyZh: "沒「看到」嗎？可能放在比較裡面的地方。就在冰箱第二層的小袋子裡，你再找找看？", isCorrect: false },
-                            { textZh: "老闆，我看到蝦米了！", textVi: "Tôi nhìn thấy tôm khô rồi!", replyZh: "太好了！你學得很快。拿出來準備做蘿蔔糕吧。👍", isCorrect: true }
+                            { textZh: "老闆，我找蝦米了。", replyZh: "你是說你「找」了，那到底是有沒有「找到」呢？你再確實跟我報告一次！", isCorrect: false },
+                            { textZh: "老闆，我沒看到蝦米。", replyZh: "沒「看到」嗎？可能放在比較裡面的地方。就在冰箱第二層的小袋子裡，你再找找看？", isCorrect: false },
+                            { textZh: "老闆，我看到蝦米了！", replyZh: "太好了！你學得很快。拿出來準備做蘿蔔糕吧。👍", isCorrect: true }
                         ]
                     },
                     {   
-                        taskName: "調配粉漿 (Mix the Batter)",
+                        taskName: "調配粉漿",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "聽好，我們的蘿蔔糕是用純「在來米粉」做的，絕對不能加麵粉！",
-                        textVi: "Bánh của chúng ta LÀ làm bằng bột gạo, tuyệt đối không dùng bột mì!",
                         interactHtml: `<div class="env-item">🌾 vs 🍚</div>`,
                         choices: [
-                            { textZh: "老闆，我加麵粉了。", textVi: "Tôi thêm bột mì rồi.", replyZh: "哎呀，加成「麵粉」了嗎？中文的粉類很多，容易搞混。我們是用「在來米粉」喔。沒關係，我們重新調一盆，你再去拿「在來米粉」過來試試看？", isCorrect: false },
-                            { textZh: "老闆，我加在來米粉了。", textVi: "Tôi thêm bột gạo rồi.", replyZh: "沒錯！就是加「在來米粉」，你記得很清楚，準備下鍋囉。💯", isCorrect: true }
+                            { textZh: "老闆，我加麵粉了。", replyZh: "哎呀，加成「麵粉」了嗎？中文的粉類很多，容易搞混。我們是用「在來米粉」喔。沒關係，我們重新調一盆，你再去拿「在來米粉」過來試試看？", isCorrect: false },
+                            { textZh: "老闆，我加在來米粉了。", replyZh: "沒錯！就是加「在來米粉」，你記得很清楚，準備下鍋囉。💯", isCorrect: true }
                         ]
                     },
                     {   
-                        taskName: "煎得恰恰 (Pan-fry)",
+                        taskName: "煎得恰恰",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "蘿蔔糕要煎得「恰恰」才好吃。你看看鍋裡，表皮看起來怎麼樣了？",
-                        textVi: "Nhìn trong chảo xem, lớp vỏ NHÌN thế nào rồi?",
                         interactHtml: `<div class="env-item">🍳</div>`,
                         choices: [
-                            { textZh: "表皮吃起來恰恰的！", textVi: "Lớp vỏ ĂN vàng giòn rồi!", replyZh: "哈哈，現在還在鍋子裡，很燙，還不能「吃」喔！你再用眼睛觀察一下，換個說法試試看？", isCorrect: false },
-                            { textZh: "表皮看起來恰恰的！", textVi: "Lớp vỏ NHÌN vàng giòn rồi!", replyZh: "用對了！看起來顏色很漂亮，準備端給客人吧。", isCorrect: true }
+                            { textZh: "表皮吃起來恰恰的！", replyZh: "現在還在鍋子裡，很燙，還不能「吃」喔！你再用眼睛觀察一下，換個說法試試看？", isCorrect: false },
+                            { textZh: "表皮看起來恰恰的！", replyZh: "用對了！看起來顏色很漂亮，準備端給客人吧。", isCorrect: true }
                         ]
                     },
                     {   
-                        taskName: "服務外國客人 (Serve Customer)",
-                        speakerIcon: "👱‍♂️ 馬丁 (Martin)",
+                        taskName: "服務外國客人",
+                        speakerIcon: "👱‍♂️ 馬丁",
                         textZh: "你好！我聽說台灣人過年吃蘿蔔糕，為什麼呢？",
-                        textVi: "Tại sao người Đài Loan lại ăn bánh củ cải dịp Tết vậy?",
                         interactHtml: `<div class="env-item">🍽️</div>`,
                         choices: [
-                            { textZh: "因為我會做，所以你應該吃。", textVi: "Vì tôi BIẾT làm, nên anh nên ăn.", replyZh: "哇，你「會做」很厲害！不過，我是想問為什麼台灣人過年要吃蘿蔔糕呢？是不是有特別的意思？你再想想看？", isCorrect: false },
-                            { textZh: "因為蘿蔔叫菜頭，吃蘿蔔糕，新的一年會有好運氣！", textVi: "Vì củ cải là 'Thái đầu', ăn bánh củ cải, năm mới SẼ có vận may!", replyZh: "原來如此！你的中文解釋得很好，那我買兩份！🤩", isCorrect: true }
+                            { textZh: "因為我會做，所以你應該吃。", replyZh: "哇，你「會做」很厲害！不過，我是想問為什麼台灣人過年要吃蘿蔔糕呢？是不是有特別的意思？你再想想看？", isCorrect: false },
+                            { textZh: "因為蘿蔔叫菜頭，吃蘿蔔糕，新的一年會有好運氣！", replyZh: "原來如此！你的中文解釋得很好，那我買兩份！🤩", isCorrect: true }
                         ]
                     }
                 ]
             },
             2: { // STAGE 2: 年糕
-                title: "Stage 2: 年糕 (Nian Gao)",
+                title: "Stage 2: 年糕",
+                grammarReview: [
+                    "<strong>形容詞重疊 (AABB)：</strong>如「香香甜甜」，讓語氣更生動、可愛，或強調程度。",
+                    "<strong>...的時候：</strong>表示某個特定的時間點 (When...)。例如：過年的時候。",
+                    "<strong>V+完 / V+好：</strong>結果補語。「吃完」強調動作結束，「洗好」強調動作完成且達到滿意狀態。",
+                    "<strong>更：</strong>表示程度加深 (more)。例如：味道更香 (smells even better)。"
+                ],
                 tasks: [
                     {   
-                        taskName: "試吃年糕 (Taste Test)",
+                        taskName: "試吃年糕",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "辛苦了！桌上有我剛煎好的台灣年糕，你趁熱吃吃看。味道怎麼樣？",
-                        textVi: "Vất vả rồi! Trên bàn có bánh tổ tôi vừa chiên, ăn lúc nóng xem vị thế nào?",
                         interactHtml: `<div class="env-item">🥞</div>`,
                         choices: [
-                            { textZh: "老闆，這塊年糕很香香。", textVi: "Miếng bánh này rất thơm thơm.", replyZh: "哇，看來你很喜歡！不過我們通常只會選「很香」或是「香香的」其中一種說法。你再重新形容一次給我聽聽看？", isCorrect: false },
-                            { textZh: "老闆，我要買一塊熱熱的年糕！", textVi: "Tôi muốn mua một miếng bánh nóng nóng!", replyZh: "哈哈，你是我的員工，這塊是我請你吃的，不用「買」啦！你先吃吃看味道如何，再跟我說？", isCorrect: false },
-                            { textZh: "哇，吃起來香香甜甜的，真好吃！", textVi: "Oa, ăn vào thơm thơm ngọt ngọt, ngon thật!", replyZh: "哈哈，會用「香香甜甜的」來形容，你的中文越來越好了！喜歡就好。👍", isCorrect: true }
+                            { textZh: "老闆，這塊年糕很香香。", replyZh: "哇，看來你很喜歡！不過我們通常只會選「很香」或是「香香的」其中一種說法。你再重新形容一次給我聽聽看？", isCorrect: false },
+                            { textZh: "老闆，我要買一塊熱熱的年糕！", replyZh: "你是我的員工，這塊是我請你吃的，不用「買」啦！你先吃吃看味道如何，再跟我說？", isCorrect: false },
+                            { textZh: "哇，吃起來香香甜甜的，真好吃！", replyZh: "會用「香香甜甜的」來形容，你的中文越來越好了！喜歡就好。👍", isCorrect: true }
                         ]
                     },
                     {   
-                        taskName: "了解文化 (Culture Talk)",
+                        taskName: "了解文化",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "你知道我們台灣人，通常是什麼時候一定會吃年糕嗎？",
-                        textVi: "Cậu biết người Đài Loan thường là KHI NÀO nhất định sẽ ăn bánh tổ không?",
                         interactHtml: `<div class="env-item">🤔 🧧</div>`,
                         choices: [
-                            { textZh: "是「的時候過年」吃嗎？", textVi: "Là 'lúc mà Tết' ăn hả?", replyZh: "哈哈，我懂你的意思！你是想說「過年...」然後呢？你再試著把這句話順順看？", isCorrect: false },
-                            { textZh: "是過年的時候吃嗎？", textVi: "Là lúc Tết ăn phải không?", replyZh: "答對了！因為年糕有「年年高升」的意思。✨", isCorrect: true }
+                            { textZh: "是「的時候過年」吃嗎？", replyZh: "我懂你的意思！你是想說「過年...」然後呢？你再試著把這句話順順看？", isCorrect: false },
+                            { textZh: "是過年的時候吃嗎？", replyZh: "答對了！因為年糕有「年年高升」的意思。✨", isCorrect: true }
                         ]
                     },
                     {   
-                        taskName: "整理環境 (Clean Up)",
+                        taskName: "整理環境",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "對了，你吃完了嗎？吃完記得把盤子拿去洗。",
-                        textVi: "Cậu đã ĂN XONG chưa? Ăn xong nhớ đem đĩa đi rửa nhé.",
                         interactHtml: `<div class="env-item">🍽️ 🚰</div>`,
                         choices: [
-                            { textZh: "老闆，我完吃了！", textVi: "Tôi xong ăn rồi!", replyZh: "哈哈，「完吃」？我猜你是想說你已經吃乾淨了，對吧？這句話聽起來有點可愛，你再試著換個順序說說看？", isCorrect: false },
-                            { textZh: "老闆，我吃完了，盤子也洗好了！", textVi: "Tôi ăn xong rồi, đĩa cũng rửa xong!", replyZh: "太好了，動作真快！盤子洗得很乾淨，真是我的好幫手。👏", isCorrect: true }
+                            { textZh: "老闆，我完吃了！", replyZh: "「完吃」？我猜你是想說你已經吃乾淨了，對吧？這句話聽起來有點可愛，你再試著換個順序說說看？", isCorrect: false },
+                            { textZh: "老闆，我吃完了，盤子也洗好了！", replyZh: "太好了，動作真快！盤子洗得很乾淨，真是我的好幫手。👏", isCorrect: true }
                         ]
                     },
                     {   
-                        taskName: "準備明天 (Prep for Tomorrow)",
+                        taskName: "準備明天",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "你知道為什麼我們的年糕喜歡用「煎」的，不直接用微波爐加熱嗎？",
-                        textVi: "Tại sao bánh tổ lại thích 'chiên', mà không hâm bằng lò vi sóng?",
                         interactHtml: `<div class="env-item">🍳 🔥</div>`,
                         choices: [
-                            { textZh: "因為煎的味道會更很香。", textVi: "Vì chiên thì vị sẽ càng rất thơm.", replyZh: "哈哈，味道真的很香對吧！不過我們講話的時候，「更」和「很」選一個用就好了喔。你再試著說一次？", isCorrect: false },
-                            { textZh: "因為煎的味道會更香！", textVi: "Vì chiên thì mùi vị sẽ càng thơm hơn!", replyZh: "沒錯！表面煎得恰恰，香氣才會出來。今天辛苦了，早點下班吧，明天見！🎉", isCorrect: true }
+                            { textZh: "因為煎的味道會更很香。", replyZh: "味道真的很香對吧！不過我們講話的時候，「更」和「很」選一個用就好了喔。你再試著說一次？", isCorrect: false },
+                            { textZh: "因為煎的味道會更香！", replyZh: "沒錯！表面煎得恰恰，香氣才會出來。今天辛苦了，早點下班吧，明天見！🎉", isCorrect: true }
                         ]
                     }
                 ]
             },
-            3: { // STAGE 3: 蒸魚
-                title: "Stage 3: 蒸魚 (Steamed Fish)",
+            3: { // NEW STAGE 3: 佛跳牆 (Was Stage 4)
+                title: "Stage 3: 佛跳牆",
+                grammarReview: [
+                    "<strong>都：</strong>表示「全部、皆」(all)。注意位置：放在動詞前面。例如：材料「都」泡好了。",
+                    "<strong>而且：</strong>連詞，用來補充第二個原因或資訊 (furthermore/and also)。",
+                    "<strong>又...又...：</strong>連接兩個性質相同的形容詞。例如：味道「又」香「又」濃。",
+                    "<strong>因為...所以...：</strong>因果連詞。用來解釋原因和結果的邏輯關係。"
+                ],
                 tasks: [
-                    {   // Task 1: V+過
-                        taskName: "傳統市場 (Traditional Market)",
-                        preMessage: {
-                            speakerIcon: "👩‍💼 我",
-                            textZh: "老闆，新年快樂！我到傳統市場了，這裡人好多！",
-                            textVi: "Ông chủ, chúc mừng năm mới! Tôi đến chợ truyền thống rồi, ở đây đông người quá!"
-                        },
+                    {   
+                        taskName: "檢查原料",
+                        preMessage: { speakerIcon: "👩‍💼 我", textZh: "老闆，今天的材料我準備好了！海參和干貝看起來變大了很多。" },
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "很好！海參和干貝要花很多時間泡水，不能馬虎。這些材料「都」泡好了嗎？",
+                        interactHtml: `<div class="env-item">🥣 💦</div>`,
+                        choices: [
+                            { textZh: "老闆，這些材料「不」都好了，我看還要再等一下。", replyZh: "咦？你是想說「還沒」全部準備好嗎？那是哪一個還沒好？你再確認一下？", isCorrect: false },
+                            { textZh: "我看這些材料好了「都」，可以用了。", replyZh: "等等，你把順序說反了喔！你要說「都」好了才對。你再重新傳一次訊息？", isCorrect: false },
+                            { textZh: "老闆，我看這些材料「都」好了，明天可以用。", replyZh: "太好了！材料準備得好，味道才會濃。明天加油！👍", isCorrect: true }
+                        ]
+                    },
+                    {   
+                        taskName: "了解客戶需求",
+                        preMessage: { speakerIcon: "👩‍💼 我", textZh: "老闆，我發現佛跳牆要做兩、三天，真的好辛苦。為什麼很多客人不自己做，要跟我們訂呢？" },
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "是啊！所以現在很多台灣人過年不自己做了。你覺得原因是什麼？",
+                        interactHtml: `<div class="env-item">📝 📦</div>`,
+                        choices: [
+                            { textZh: "我想是因為準備材料很麻煩，「而且」這道菜很容易做。", replyZh: "容易做？如果容易做，大家就不會覺得辛苦了吧？你是不是傳錯訊息了？你再想一下這道菜難不難做？", isCorrect: false },
+                            { textZh: "我想是因為準備材料很麻煩而且...", replyZh: "「而且」後面呢？你話沒說完吧？除了材料麻煩，還有什麼別的原因嗎？再試試看。", isCorrect: false },
+                            { textZh: "我想是因為準備材料很麻煩，「而且」大家平時工作很忙，所以喜歡買現成的。", replyZh: "沒錯，你說到重點了！費工又費時，所以客人才會覺得我們的服務很有價值。👏", isCorrect: true }
+                        ]
+                    },
+                    {   
+                        taskName: "評估湯頭",
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "你來喝喝看這小碗高湯，這可是精華。味道怎麼樣？",
+                        interactHtml: `<div class="env-item">🍲 🥄</div>`,
+                        choices: [
+                            { textZh: "哇！這味道喝起來「又」香「也」濃！", replyZh: "你是想說「又...又...」對吧？這道菜是「又香又濃」喔！你再試著說一次？", isCorrect: false },
+                            { textZh: "這味道喝起來很「又」香。", replyZh: "感覺你話只說了一半？「又」後面要接兩個形容詞。你是想表達味道很棒吧？再試一次？", isCorrect: false },
+                            { textZh: "哇！這味道喝起來「又」香「又」濃！我覺得客人一定會喜歡。", replyZh: "沒錯，這就是佛跳牆的靈魂。這道菜還有個名字叫「福壽全」，代表吉祥如意。✨", isCorrect: true }
+                        ]
+                    },
+                    {   
+                        taskName: "文化故事",
+                        preMessage: { speakerIcon: "👩‍💼 我", textZh: "老闆，這道菜的味道真的太香了。難怪叫「佛跳牆」，是因為跟佛有關係嗎？" },
+                        speakerIcon: "👨‍🍳 老闆",
+                        textZh: "關於這名字是怎麼來的，跟你剛剛說的「香味」有關喔。",
+                        interactHtml: `<div class="env-item">📜 🏯</div>`,
+                        choices: [
+                            { textZh: "「因為」佛想跳牆，「所以」這道菜的味道很香。", replyZh: "順序反了啦！是因為香味吸引了佛，佛才想跳牆的。你再想一下這中間的邏輯？", isCorrect: false },
+                            { textZh: "裡面有很多珍貴材料，所以佛跳牆。", replyZh: "語句不太完整喔。你要用完整的「因為...所以...」來解釋這個名字的由來。再試試看？", isCorrect: false },
+                            { textZh: "是不是「因為」材料很珍貴，味道太香了，「所以」連佛都想跳牆過來吃？", replyZh: "沒錯！就是這個意思。你這趟台灣過年學到了不少文化。明天我們要忙一整天，早點休息吧，新年快樂！🎊", isCorrect: true }
+                        ]
+                    }
+                ]
+            },
+            4: { // NEW STAGE 4: 蒸魚 (Was Stage 3)
+                title: "Stage 4: 蒸魚",
+                grammarReview: [
+                    "<strong>V+過：</strong>表示過去的經驗 (have done before)。否定句用「沒...過」。",
+                    "<strong>V+好：</strong>表示動作準備完成 (ready)。例如：材料買好了。",
+                    "<strong>先...再...：</strong>表示動作發生的先後順序 (First... then...)。",
+                    "<strong>V+V+看：</strong>表示嘗試做某件事 (try doing)。例如：吃吃看 (taste it)。"
+                ],
+                tasks: [
+                    {   
+                        taskName: "傳統市場",
+                        preMessage: { speakerIcon: "👩‍💼 我", textZh: "老闆，新年快樂！我到傳統市場了，這裡人好多！" },
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "新年快樂！傳統市場過年很熱鬧吧？你以前有去買過菜嗎？",
-                        textVi: "Chúc mừng năm mới! Chợ truyền thống ngày Tết náo nhiệt lắm đúng không? Trước đây cậu từng đi mua thức ăn ở đó chưa?",
                         interactHtml: `<div class="env-item">🏮 🥬 🥩</div>`,
                         choices: [
-                            { textZh: "老闆，我以前「不」去過傳統市場。", textVi: "Ông chủ, trước đây tôi 'không' từng đi chợ truyền thống.", replyZh: "哈哈，你是想說你「沒」去過對不對？傳統市場很有趣，你今天可以到處看看喔。你再重新跟我說一次？", isCorrect: false },
-                            { textZh: "老闆，我以前去了傳統市場。", textVi: "Ông chủ, trước đây tôi đã đi chợ truyền thống rồi.", replyZh: "喔？你已經去「過了」嗎？可是你剛剛傳訊息聽起來很驚訝，你再回想一下，是不是第一次去？", isCorrect: false },
-                            { textZh: "老闆，這是我第一次來，我以前「沒」來「過」傳統市場。", textVi: "Ông chủ, đây là lần đầu tôi đến, trước đây tôi 'chưa' từng đến chợ truyền thống bao giờ.", replyZh: "原來是這樣！那你慢慢逛，感受一下台灣過年的氣氛。👍", isCorrect: true }
+                            { textZh: "老闆，我以前「不」去過傳統市場。", replyZh: "咦？你是想說你「沒」去過對不對？傳統市場很有趣，你今天可以到處看看喔。你再重新跟我說一次？", isCorrect: false },
+                            { textZh: "老闆，我以前去了傳統市場。", replyZh: "喔？你已經去「過了」嗎？可是你剛剛傳訊息聽起來很驚訝，你再回想一下，是不是第一次去？", isCorrect: false },
+                            { textZh: "老闆，這是我第一次來，我以前「沒」來「過」傳統市場。", replyZh: "原來是這樣！那你慢慢逛，感受一下台灣過年的氣氛。👍", isCorrect: true }
                         ]
                     },
-                    {   // Task 2: V+好
-                        taskName: "準備原物料 (Prep Ingredients)",
+                    {   
+                        taskName: "準備原物料",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "今晚是除夕夜，你要準備做什麼好吃的？材料都準備好了嗎？",
-                        textVi: "Tối nay là đêm Giao thừa, cậu định chuẩn bị món gì ngon vậy? Đã chuẩn bị xong nguyên liệu chưa?",
                         interactHtml: `<div class="env-item">🐟 攤</div>`,
                         choices: [
-                            { textZh: "魚攤阿姨推薦我買鯧魚，所以我買了一條，我好買了！", textVi: "Dì bán cá khuyên tôi mua cá chim, nên tôi đã mua một con, tôi 'xong mua' rồi!", replyZh: "哈哈，「好買了」？你應該是想說你已經「買好」了對吧？鯧魚很適合清蒸喔，你再換個順序說說看？", isCorrect: false },
-                            { textZh: "我買完了！阿姨推薦我買鯧魚。", textVi: "Tôi mua xong [hết sạch] rồi! Dì khuyên tôi mua cá chim.", replyZh: "買「完」了？聽起來好像你把整個市場的魚都買光了哈哈！你想說的應該是你已經準備「好」了吧？換個說法試試看？", isCorrect: false },
-                            { textZh: "我買「好」了！魚攤阿姨推薦我買鯧魚，所以我買了一條。", textVi: "Tôi mua xong rồi! Dì bán cá khuyên tôi mua cá chim, nên tôi đã mua một con.", replyZh: "動作真快！鯧魚做蒸魚最棒了，期待你的大餐！👏", isCorrect: true }
+                            { textZh: "魚攤阿姨推薦我買鯧魚，所以我買了一條，我好買了！", replyZh: "「好買了」？你應該是想說你已經「買好」了對吧？鯧魚很適合清蒸喔，你再換個順序說說看？", isCorrect: false },
+                            { textZh: "我買完了！阿姨推薦我買鯧魚。", replyZh: "買「完」了？聽起來好像你把整個市場的魚都買光了！你想說的應該是你已經準備「好」了吧？換個說法試試看？", isCorrect: false },
+                            { textZh: "我買「好」了！魚攤阿姨推薦我買鯧魚，所以我買了一條。", replyZh: "動作真快！鯧魚做蒸魚最棒了，期待你的大餐！👏", isCorrect: true }
                         ]
                     },
-                    {   // Task 3: 先...再...
-                        taskName: "做菜順序 (Cooking Steps)",
+                    {   
+                        taskName: "做菜順序",
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "聽說你沒做過蒸魚，你知道順序嗎？打算怎麼做？",
-                        textVi: "Nghe nói cậu chưa làm món cá hấp bao giờ, cậu biết thứ tự làm không? Định làm thế nào?",
                         interactHtml: `<div class="env-item">🐟 🧂 蔥薑</div>`,
                         choices: [
-                            { textZh: "我打算先加醬油，然後洗魚，放蔥和薑。", textVi: "Tôi định cho nước tương vào trước, sau đó rửa cá, cho hành và gừng.", replyZh: "順序有點怪怪的喔！如果一開始就加醬油，後來洗魚的時候醬油不就被洗掉了嗎？你再想一下「先」做什麼，「再」做什麼？", isCorrect: false },
-                            { textZh: "我打算加醬油先，洗乾淨再。", textVi: "Tôi định cho nước tương trước, rửa sạch rồi mới.", replyZh: "哈哈，中文的順序是「先」加醬油，「再」洗乾淨。不過你的步驟顛倒了，你再重新思考一下煮菜的順序？", isCorrect: false },
-                            { textZh: "我打算先加醬油，再把魚洗乾淨，然後放蔥和薑，對嗎？", textVi: "Tôi định cho nước tương vào trước, rồi mới rửa sạch cá, sau đó cho hành và gừng, đúng không?", replyZh: "哎呀，不對啦！你要「先」把魚洗乾淨，放蔥和薑，「再」加一點醬油。最後蒸十分鐘才對喔。", isCorrect: true, playerAutoReplyZh: "啊！原來是這樣。謝謝老闆，我明白了！" }
+                            { textZh: "我打算先加醬油，然後洗魚，放蔥和薑。", replyZh: "順序有點怪怪的喔！如果一開始就加醬油，後來洗魚的時候醬油不就被洗掉了嗎？你再想一下「先」做什麼，「再」做什麼？", isCorrect: false },
+                            { textZh: "我打算加醬油先，洗乾淨再。", replyZh: "中文的順序是「先」加醬油，「再」洗乾淨。不過你的步驟顛倒了，你再重新思考一下煮菜的順序？", isCorrect: false },
+                            { textZh: "我打算先加醬油，再把魚洗乾淨，然後放蔥和薑，對嗎？", replyZh: "哎呀，不對啦！你要「先」把魚洗乾淨，放蔥和薑，「再」加一點醬油。最後蒸十分鐘才對喔。", isCorrect: true, playerAutoReplyZh: "啊！原來是這樣。謝謝老闆，我明白了！" }
                         ]
                     },
-                    {   // Task 4: V V 看
-                        taskName: "分享成果 (Share Result)",
-                        preMessage: {
-                            speakerIcon: "👩‍💼 我",
-                            textZh: "老闆，我照您教的方法做好了！我拍了一張照片傳給您，您看看。（傳送照片）<br><img src='zhengyu.jpg' alt='Steamed Fish' style='width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid #ccc;'>",
-                            textVi: "Ông chủ, tôi làm xong theo cách ông dạy rồi! Tôi chụp một bức ảnh gửi cho ông, ông xem thử nhé. [Gửi ảnh]"
-                        },
+                    {   
+                        taskName: "分享成果",
+                        preMessage: { speakerIcon: "👩‍💼 我", textZh: "老闆，我照您教的方法做好了！我拍了一張照片傳給您，您看看。（傳送照片）" },
                         speakerIcon: "👨‍🍳 老闆",
                         textZh: "哇，看起來很好吃！對了，你知道為什麼台灣人過年一定要吃全魚，而且不能全部吃完嗎？",
-                        textVi: "Wow, nhìn ngon quá! À đúng rồi, cậu có biết tại sao người Đài Loan đón Tết nhất định phải ăn cá nguyên con, mà lại không được ăn hết sạch không?",
                         interactHtml: `<div class="env-item">📱 💬</div>`,
                         choices: [
-                            { textZh: "因為魚很好吃，所以要慢慢吃吃？", textVi: "Vì cá rất ngon, nên phải ăn từ từ?", replyZh: "哈哈，你是想說「慢慢吃」對吧？雖然魚很好吃，但其實有別的意思喔。你再猜猜看有什麼特別的意義？", isCorrect: false },
-                            { textZh: "因為我要把剩下的留給貓咪吃吃看？", textVi: "Vì tôi phải chừa lại phần dư cho mèo ăn thử xem sao?", replyZh: "哈哈，你想給貓咪「吃吃看」嗎？貓咪一定會很開心！不過，過年留一點魚是有特別的文化意義的喔。你再想一下「魚」的發音？", isCorrect: false },
-                            { textZh: "是因為「魚」和「餘」的發音一樣，代表「年年有餘」對嗎？下次開店，我再做給您吃吃看！", textVi: "Là vì 'Ngư' và 'Dư' phát âm giống nhau, tượng trưng cho 'Năm nào cũng dư dả' đúng không? Lần tới mở quán, tôi sẽ làm cho ông ăn thử xem sao!", replyZh: "沒錯！就是「年年有餘」！這張照片看起來你做得非常成功。今晚就好好享受你的年夜飯吧！新年快樂！🎊", isCorrect: true }
+                            { textZh: "因為魚很好吃，所以要慢慢吃吃？", replyZh: "你是想說「慢慢吃」對吧？雖然魚很好吃，但其實有別的意思喔。你再猜猜看有什麼特別的意義？", isCorrect: false },
+                            { textZh: "因為我要把剩下的留給貓咪吃吃看？", replyZh: "想給貓咪「吃吃看」嗎？貓咪一定會很開心！不過，過年留一點魚是有特別的文化意義的喔。你再想一下「魚」的發音？", isCorrect: false },
+                            { textZh: "是因為「魚」和「餘」的發音一樣，代表「年年有餘」對嗎？下次開店，我再做給您吃吃看！", replyZh: "沒錯！就是「年年有餘」！這張照片看起來你做得非常成功。今晚就好好享受你的年夜飯吧！新年快樂！🎊", isCorrect: true }
                         ]
                     }
                 ]
@@ -298,12 +383,11 @@
         };
 
         /* ==================================================================
-           ENGINE LOGIC & TTS
+           ENGINE LOGIC & TTS (CLICK TO PLAY)
            ================================================================== */
         let currentStage = 1;
         let currentTaskIndex = 0;
         let score = 0;
-        let isMuted = false;
         let firstTry = true;
         const synth = window.speechSynthesis;
 
@@ -312,6 +396,7 @@
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('memo-modal').style.display = 'none';
             document.getElementById('stage-select-screen').classList.remove('hidden');
+            synth.cancel();
         }
 
         function backToMenu() {
@@ -334,16 +419,9 @@
             document.getElementById('score-text').innerText = `Trust Level: ${score}`;
         }
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            document.getElementById('mute-btn').innerText = isMuted ? "🔇 Audio: OFF" : "🔊 Audio: ON";
-            if(isMuted) synth.cancel();
-        }
-
-        // --- HỆ THỐNG ĐỌC TTS THÔNG MINH ---
+        // --- HỆ THỐNG ĐỌC TTS CHỦ ĐỘNG ---
         function speakChinese(textToRead) {
-            if (isMuted) return;
-            // Dọn dẹp thẻ HTML (<img>, <br>...) và Emoji trước khi đọc
+            synth.cancel(); // Stop any ongoing speech
             let cleanText = textToRead.replace(/<[^>]*>?/gm, ''); 
             cleanText = cleanText.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
             
@@ -352,28 +430,60 @@
             synth.speak(utterance);
         }
 
-        function addMessage(speakerName, textZh, textVi, isPlayer) {
+        function showTypingIndicator() {
+            const chatHistory = document.getElementById('chat-history');
+            const typingDiv = document.getElementById('typing-indicator');
+            chatHistory.appendChild(typingDiv); // Move to bottom
+            typingDiv.classList.remove('hidden');
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            document.getElementById('typing-indicator').classList.add('hidden');
+        }
+
+        function addMessage(speakerName, textZh, isPlayer) {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${isPlayer ? 'player-msg' : 'boss-msg'}`;
             
+            // Escape quotes for the onclick function
+            const safeText = textZh.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
             let htmlContent = "";
-            if(speakerName) { htmlContent += `<span class="speaker-name">${speakerName}</span>`; }
-            htmlContent += textZh;
-            if(textVi) { htmlContent += `<span class="note">(${textVi})</span>`; }
+            if(speakerName) { htmlContent += `<div class="speaker-name">${speakerName}</div>`; }
+            
+            htmlContent += `
+                <div class="msg-body">
+                    <span class="msg-text">${textZh}</span>
+                    <button class="play-audio-btn" onclick="speakChinese('${safeText}')">🔊</button>
+                </div>
+            `;
             
             msgDiv.innerHTML = htmlContent;
-            document.getElementById('chat-history').appendChild(msgDiv);
             
             const chatHistory = document.getElementById('chat-history');
+            chatHistory.insertBefore(msgDiv, document.getElementById('typing-indicator')); // Insert above typing indicator
             chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
 
-            speakChinese(textZh); 
+        function showGrammarReview() {
+            const stageData = GAME_DATA[currentStage];
+            const ul = document.getElementById('grammar-points');
+            ul.innerHTML = '';
+            
+            stageData.grammarReview.forEach(point => {
+                const li = document.createElement('li');
+                li.innerHTML = point;
+                ul.appendChild(li);
+            });
+            
+            document.getElementById('memo-modal').style.display = 'flex';
         }
 
         function loadTask() {
             const stageData = GAME_DATA[currentStage];
             if (currentTaskIndex >= stageData.tasks.length) {
-                document.getElementById('memo-modal').style.display = 'flex';
+                setTimeout(showGrammarReview, 1000);
                 return;
             }
 
@@ -383,28 +493,35 @@
             
             document.getElementById('scene-title').innerText = task.taskName;
             document.getElementById('interactive-area').innerHTML = task.interactHtml;
+            document.getElementById('choices-container').classList.add('hidden');
             
-            // Xử lý tin nhắn "Mở bài" của nhân viên nếu có (Dùng cho Màn 3)
+            // Xử lý tin nhắn "Mở bài" của nhân viên (Player pre-message)
+            let delayTime = 0;
             if (task.preMessage) {
-                addMessage(task.preMessage.speakerIcon, task.preMessage.textZh, task.preMessage.textVi, true);
+                addMessage(task.preMessage.speakerIcon, task.preMessage.textZh, true);
+                delayTime = 1000;
             }
 
-            // Đợi một chút rồi in tin nhắn của Boss (giúp UI đỡ bị giật khi load 2 tin nhắn cùng lúc)
+            // Boss Typing Effect
             setTimeout(() => {
-                addMessage(task.speakerIcon, task.textZh, task.textVi, false);
-                renderChoices(task);
-            }, task.preMessage ? 800 : 0); 
+                showTypingIndicator();
+                setTimeout(() => {
+                    hideTypingIndicator();
+                    addMessage(task.speakerIcon, task.textZh, false);
+                    renderChoices(task);
+                }, 1500); // 1.5s typing delay
+            }, delayTime); 
         }
 
         function renderChoices(task) {
             const container = document.getElementById('choices-container');
             container.innerHTML = ''; 
-            container.style.display = 'flex'; 
+            container.classList.remove('hidden'); 
 
             task.choices.forEach(choice => {
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
-                btn.innerHTML = `💬 ${choice.textZh} <br><span class="note">(${choice.textVi})</span>`;
+                btn.innerHTML = `💬 ${choice.textZh}`;
                 btn.onclick = () => handleAnswer(choice, task);
                 container.appendChild(btn);
             });
@@ -416,36 +533,48 @@
         }
 
         function handleAnswer(choice, task) {
-            document.getElementById('choices-container').style.display = 'none'; 
+            document.getElementById('choices-container').classList.add('hidden'); 
             
-            // In câu trả lời của người chơi
-            addMessage("", choice.textZh, "", true);
+            // 1. In câu trả lời của người chơi
+            addMessage("👩‍💼 我", choice.textZh, true);
 
-            // Đợi 1 giây để boss phản hồi
+            // 2. Boss bắt đầu gõ
             setTimeout(() => {
-                if(choice.isCorrect) {
-                    score += firstTry ? 10 : 5;
-                    addMessage(task.speakerIcon, choice.replyZh, "", false);
+                showTypingIndicator();
+                
+                // 3. Phản hồi của Boss sau 1.5s gõ phím
+                setTimeout(() => {
+                    hideTypingIndicator();
                     
-                    // Kiểm tra xem có tin nhắn Auto-Reply của người chơi không (Như Task 3 - Màn 3)
-                    if (choice.playerAutoReplyZh) {
-                        setTimeout(() => {
-                            addMessage("", choice.playerAutoReplyZh, "", true);
+                    if(choice.isCorrect) {
+                        score += firstTry ? 10 : 5;
+                        addMessage(task.speakerIcon, choice.replyZh, false);
+                        
+                        // Nếu có câu đáp tự động của Player
+                        if (choice.playerAutoReplyZh) {
+                            setTimeout(() => {
+                                showTypingIndicator(); // Giả lập Player gõ
+                                setTimeout(() => {
+                                    hideTypingIndicator();
+                                    addMessage("👩‍💼 我", choice.playerAutoReplyZh, true);
+                                    currentTaskIndex++;
+                                    setTimeout(loadTask, 2000); 
+                                }, 1000);
+                            }, 1500); 
+                        } else {
                             currentTaskIndex++;
-                            setTimeout(loadTask, 2500); // Chuyển task sau khi tự động đáp
-                        }, 1500); 
+                            setTimeout(loadTask, 2000); 
+                        }
                     } else {
-                        currentTaskIndex++;
-                        setTimeout(loadTask, 2500); 
+                        score -= 2;
+                        firstTry = false;
+                        addMessage(task.speakerIcon, choice.replyZh, false);
+                        updateUI();
+                        // Trả lại nút lựa chọn sau 2s
+                        setTimeout(() => renderChoices(task), 2000); 
                     }
-                } else {
-                    score -= 2;
-                    firstTry = false;
-                    addMessage(task.speakerIcon, choice.replyZh, "", false);
-                    updateUI();
-                    setTimeout(() => renderChoices(task), 2000); 
-                }
-            }, 1000);
+                }, 1500);
+            }, 500);
         }
     </script>
 </body>
